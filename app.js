@@ -3,8 +3,8 @@ import { PORT } from "./config/env.js";
 import cors from "cors";
 const app = express();
 import pool from "./db.js";
-import router from "./routes/auth.route.js";
-
+import authRouter from "./routes/auth.route.js";
+import protectedRoute from "./routes/protected.route.js";
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -16,7 +16,8 @@ app.get("/db-test", async (req, res) => {
 });
 
 // Routes
-app.use("/api/v1/auth", router);
+app.use("/api/v1/protected", protectedRoute);
+app.use("/api/v1/auth", authRouter);
 app.listen(PORT, async () => {
   console.log(`Gach-Pala API Running on ${PORT}`);
 });
