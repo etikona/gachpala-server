@@ -7,6 +7,7 @@ import authRouter from "./routes/auth.route.js";
 import protectedRoute from "./routes/protected.route.js";
 import dotenv from "dotenv";
 import aiRouter from "./routes/ai.route.js";
+import blogRouter from "./routes/blog.route.js";
 
 dotenv.config();
 // Middleware
@@ -20,6 +21,7 @@ app.get("/db-test", async (req, res) => {
 });
 
 // Routes
+app.use("/api/v1/blogs", blogRouter);
 app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/protected", protectedRoute);
 app.use("/api/v1/auth", authRouter);
