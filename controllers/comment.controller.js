@@ -1,6 +1,6 @@
 import { addComment } from "../models/comment.model.js";
 
-const createComment = async (req, res) => {
+export const createComment = async (req, res) => {
   try {
     const { content } = req.body;
     const blogId = req.params.blogId;
@@ -12,5 +12,3 @@ const createComment = async (req, res) => {
     res.status(500).json({ msg: "Error adding comment", error: err.message });
   }
 };
-
-export default createComment;

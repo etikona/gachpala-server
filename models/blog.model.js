@@ -1,6 +1,6 @@
 import pool from "../db.js";
 
-const createBlog = async ({ title, content, category }) => {
+export const createBlog = async ({ title, content, category }) => {
   const res = await pool.query(
     `INSERT INTO blogs (title, content, category) VALUES ($1, $2, $3) RETURNING *`,
     [title, content, category]
@@ -8,7 +8,7 @@ const createBlog = async ({ title, content, category }) => {
   return res.rows[0];
 };
 
-const getAllBlogs = async (search, category) => {
+export const getAllBlogs = async (search, category) => {
   let query = "SELECT * FROM blogs WHERE 1=1";
   const params = [];
 
@@ -25,13 +25,7 @@ const getAllBlogs = async (search, category) => {
   return res.rows;
 };
 
-const getBlogById = async (id) => {
+export const getBlogById = async (id) => {
   const res = await pool.query("SELECT * FROM blogs WHERE id = $1", [id]);
   return res.rows[0];
-};
-
-export default {
-  createBlog,
-  getAllBlogs,
-  getBlogById,
 };

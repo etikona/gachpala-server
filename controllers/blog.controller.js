@@ -1,7 +1,7 @@
 import { createBlog, getAllBlogs, getBlogById } from "../models/blog.model.js";
 import { getCommentsByBlog } from "../models/comment.model.js";
 
-const createBlog = async (req, res) => {
+export const create = async (req, res) => {
   try {
     const { title, content, category } = req.body;
     const blog = await createBlog({ title, content, category });
@@ -11,7 +11,7 @@ const createBlog = async (req, res) => {
   }
 };
 
-const blogList = async (req, res) => {
+export const list = async (req, res) => {
   try {
     const { search, category } = req.query;
     const blogs = await getAllBlogs(search, category);
@@ -21,7 +21,7 @@ const blogList = async (req, res) => {
   }
 };
 
-const blogDetails = async (req, res) => {
+export const details = async (req, res) => {
   try {
     const blog = await getBlogById(req.params.id);
     if (!blog) return res.status(404).json({ msg: "Blog is not found" });
@@ -32,5 +32,3 @@ const blogDetails = async (req, res) => {
     res.status(500).json({ msg: "Error fetching blog", error: err.message });
   }
 };
-
-export default { createBlog, blogDetails, blogList };

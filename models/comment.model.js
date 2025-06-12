@@ -1,6 +1,6 @@
 import pool from "../db.js";
 
-const addComment = async ({ userId, blogId, content }) => {
+export const addComment = async ({ userId, blogId, content }) => {
   const res = await pool.query(
     `INSERT INTO comments (user_id, blog_id, content) VALUES ($1, $2, $3) RETURNING *`,
     [userId, blogId, content]
@@ -8,7 +8,7 @@ const addComment = async ({ userId, blogId, content }) => {
   return res.rows[0];
 };
 
-const getCommentsByBlog = async (blogId) => {
+export const getCommentsByBlog = async (blogId) => {
   const res = await pool.query(
     `SELECT c.*, u.name AS username FROM comments c
      JOIN users u ON c.user_id = u.id
@@ -16,9 +16,4 @@ const getCommentsByBlog = async (blogId) => {
     [blogId]
   );
   return res.rows;
-};
-
-export default {
-  addComment,
-  getCommentsByBlog,
 };
