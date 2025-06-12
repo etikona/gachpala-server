@@ -8,6 +8,8 @@ import protectedRoute from "./routes/protected.route.js";
 import dotenv from "dotenv";
 import aiRouter from "./routes/ai.route.js";
 import blogRouter from "./routes/blog.route.js";
+import sellerRouter from "./routes/seller.route.js";
+import productRouter from "./routes/product.route.js";
 
 dotenv.config();
 // Middleware
@@ -21,6 +23,8 @@ app.get("/db-test", async (req, res) => {
 });
 
 // Routes
+app.use("/api/v1/products", productRouter);
+app.use("/api/v1/seller", sellerRouter);
 app.use("/api/v1/blogs", blogRouter);
 app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/protected", protectedRoute);
