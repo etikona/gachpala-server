@@ -12,6 +12,7 @@ import sellerRouter from "./routes/seller.route.js";
 import productRouter from "./routes/product.route.js";
 import orderRouter from "./routes/order.route.js";
 import paymentRouter from "./routes/payment.route.js";
+import adminDashboard from "./routes/adminDashboard.route.js";
 
 dotenv.config();
 // Middleware
@@ -25,7 +26,7 @@ app.get("/db-test", async (req, res) => {
 });
 
 // Routes
-
+app.use("/api/v1/admin", adminDashboard);
 app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/products", productRouter);
