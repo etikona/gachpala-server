@@ -10,6 +10,8 @@ import aiRouter from "./routes/ai.route.js";
 import blogRouter from "./routes/blog.route.js";
 import sellerRouter from "./routes/seller.route.js";
 import productRouter from "./routes/product.route.js";
+import orderRouter from "./routes/order.route.js";
+import paymentRouter from "./routes/payment.route.js";
 
 dotenv.config();
 // Middleware
@@ -23,6 +25,9 @@ app.get("/db-test", async (req, res) => {
 });
 
 // Routes
+
+app.use("/api/v1/payments", paymentRouter);
+app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/seller", sellerRouter);
 app.use("/api/v1/blogs", blogRouter);
