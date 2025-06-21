@@ -1,4 +1,4 @@
-import pool from "../db";
+import pool from "../db.js";
 import { getSellerByUserId } from "../models/sellerModel";
 
 export const getSellerDashboard = async (req, res) => {
