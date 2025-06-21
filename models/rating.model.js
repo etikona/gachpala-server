@@ -1,4 +1,4 @@
-import pool from "../db";
+import pool from "../db.js";
 
 export const addRating = async ({ userId, productId, rating, review }) => {
   const res = await pool.query(

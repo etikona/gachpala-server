@@ -1,5 +1,5 @@
-import { getPaymentsForSeller } from "../models/paymentModel";
-import { getSellerByUserId } from "../models/sellerModel";
+import { getPaymentsForSeller } from "../models/payment.model.js";
+import { getSellerByUserId } from "../models/seller.model.js";
 
 export const sellerPayments = async (req, res) => {
   try {

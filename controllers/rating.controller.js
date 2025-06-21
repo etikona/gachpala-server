@@ -1,4 +1,4 @@
-import { addRating } from "../models/ratingModel";
+import { addRating } from "../models/rating.model.js";
 
 export const rateProduct = async (req, res) => {
   try {

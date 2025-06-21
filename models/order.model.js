@@ -1,4 +1,4 @@
-import pool from "../db";
+import pool from "../db.js";
 
 export const createOrder = async ({ userId, total }) => {
   const res = await pool.query(

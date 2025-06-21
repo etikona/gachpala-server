@@ -1,9 +1,13 @@
 import { Router } from "express";
-import sellerController from "../controllers/seller.controller.js";
+
+import {
+  getSellerProfile,
+  registerBusiness,
+} from "../controllers/seller.controller.js";
 import auth from "../middlewares/auth.middleware.js";
 
 const sellerRouter = Router();
-sellerRouter.post("/register", auth, sellerController.registerBusiness);
-sellerRouter.get("/profile", auth, sellerController.getSellerProfile);
+sellerRouter.post("/register", auth, registerBusiness);
+sellerRouter.get("/profile", auth, getSellerProfile);
 
 export default sellerRouter;

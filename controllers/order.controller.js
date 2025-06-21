@@ -1,3 +1,4 @@
+import pool from "../db";
 import {
   createOrder,
   addOrderItem,
@@ -5,7 +6,6 @@ import {
   getOrderDetails,
 } from "../models/order.model.js";
 import { createPayment } from "../models/payment.model.js";
-import pool from "../db";
 
 export const placeOrder = async (req, res) => {
   const { items, paymentMethod } = req.body;
