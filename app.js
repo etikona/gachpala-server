@@ -13,6 +13,7 @@ import productRouter from "./routes/product.route.js";
 import orderRouter from "./routes/order.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import adminDashboard from "./routes/adminDashboard.route.js";
+import userDashboard from "./routes/userDashboard.route.js";
 
 dotenv.config();
 // Middleware
@@ -27,11 +28,12 @@ app.get("/db-test", async (req, res) => {
 
 // Routes
 app.use("/api/v1/admin", adminDashboard);
+app.use("/api/v1/user", userDashboard);
 app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/seller", sellerRouter);
-app.use("/api/v1/blogs", blogRouter);
+app.use("/api/v1/blog", blogRouter);
 app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/protected", protectedRoute);
 app.use("/api/v1/auth", authRouter);
