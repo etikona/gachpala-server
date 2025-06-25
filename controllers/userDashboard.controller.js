@@ -1,6 +1,6 @@
 import pool from "../db.js";
 
-export const getUserDashboard = async (req, res) => {
+const getUserDashboard = async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -37,3 +37,5 @@ export const getUserDashboard = async (req, res) => {
       .json({ msg: "Failed to load user dashboard", error: err.message });
   }
 };
+
+export default getUserDashboard;
