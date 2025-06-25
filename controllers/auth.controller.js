@@ -3,13 +3,13 @@ import jwt from "jsonwebtoken";
 import { createUser, findUserByEmail } from "../models/user.model.js";
 
 export const register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
   try {
     const existing = await findUserByEmail(email);
     if (existing) return res.status(400).json({ msg: "User already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await createUser(name, email, hashed, role || "user");
+    const user = await createUser(name, email, hashed || "user");
 
     res.status(201).json({ msg: "User registered", user });
   } catch (err) {
