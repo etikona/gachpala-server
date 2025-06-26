@@ -1,4 +1,5 @@
 import express from "express";
+import "./db-init.js";
 import { PORT } from "./config/env.js";
 import cors from "cors";
 const app = express();
