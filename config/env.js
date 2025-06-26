@@ -1,6 +1,12 @@
 import { config } from "dotenv";
 
-config({ path: `.env.${process.env.NODE_ENV || "development"}.local` });
+// Always load base .env first
+config();
+
+// Then load environment-specific file
+if (process.env.NODE_ENV) {
+  config({ path: `.env.${process.env.NODE_ENV}.local` });
+}
 
 export const {
   PORT,

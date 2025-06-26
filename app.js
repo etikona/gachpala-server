@@ -28,8 +28,21 @@ app.use(express.json());
 
 // Immediately test connection
 
-app.get("/db-test", async (req, res) => {
-  res.send("Hello from Postgresql");
+app.get("/test-db", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW() as time");
+    res.json({
+      status: "success",
+      time: result.rows[0].time,
+      dbConfig: pool.options, // Shows connection details
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      message: err.message,
+      config: pool.options,
+    });
+  }
 });
 
 // Routes
