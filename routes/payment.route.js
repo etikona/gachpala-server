@@ -1,8 +1,8 @@
-import { Router } from "express";
-import { sellerPayments } from "../controllers/payment.controller.js";
-import auth from "../middlewares/auth.middleware.js";
+// import { Router } from "express";
+// import { sellerPayments } from "../controllers/payment.controller.js";
+// import auth from "../middlewares/auth.middleware.js";
 
-const paymentRouter = Router();
-paymentRouter.get("/seller", auth, sellerPayments);
+// const paymentRouter = Router();
+// paymentRouter.get("/seller", auth, sellerPayments);
 
-export default paymentRouter;
+// export default paymentRouter;
