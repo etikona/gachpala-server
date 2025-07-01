@@ -104,18 +104,32 @@ export const registerSeller = async (req, res) => {
 
 export const loginSeller = async (req, res) => {
   try {
-    const { email_or_phone, password } = req.body;
+    // Ensure body exists before destructuring
+    if (!req.body || typeof req.body !== "object") {
+      return res.status(400).json({ msg: "Invalid request body" });
+    }
 
-    const result = await pool.query(
-      `SELECT * FROM sellers WHERE email = $1 OR phone_number = $1`,
-      [email_or_phone]
-    );
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({ msg: "Email and password are required" });
+    }
+
+    const result = await pool.query(`SELECT * FROM sellers WHERE email = $1`, [
+      email,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: "Seller not found" });
+    }
 
     const seller = result.rows[0];
-    if (!seller) return res.status(404).json({ msg: "Seller not found" });
-
     const match = await bcrypt.compare(password, seller.password);
-    if (!match) return res.status(401).json({ msg: "Invalid credentials" });
+
+    if (!match) {
+      return res.status(401).json({ msg: "Invalid credentials" });
+    }
 
     const token = jwt.sign(
       { id: seller.id, role: "seller" },
@@ -125,6 +139,7 @@ export const loginSeller = async (req, res) => {
 
     res.json({ token, sellerId: seller.id });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ msg: "Login failed", error: err.message });
   }
 };
