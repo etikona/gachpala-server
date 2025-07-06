@@ -63,6 +63,8 @@ app.use("/api/v1/blog", blogRouter);
 // app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/protected", protectedRoute);
 app.use("/api/v1/auth", authRouter);
+
+// ! APP Listening
 app.listen(PORT, async () => {
   console.log(`Gach-Pala API Running on ${PORT}`);
 });
