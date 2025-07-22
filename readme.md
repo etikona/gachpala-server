@@ -29,9 +29,10 @@
 ### Blog Route
 
 - GET = [`https://gachpala-server.onrender.com/api/v1/blog`]
-- GET = [`https://gachpala-server.onrender.com/api/v1/blog/:id`]
+- GET (blog details) = [`https://gachpala-server.onrender.com/api/v1/blog/:id`]
 - POST = [`https://gachpala-server.onrender.com/api/v1/blog`]
-- POST = [`https://gachpala-server.onrender.com/api/v1/blog/:blogId/comments`]
+- PUT (update blog) = [`https://gachpala-server.onrender.com/api/v1/blog/:id`]
+- DELETE (remove blog) = [`https://gachpala-server.onrender.com/api/v1/blog/:id`]
 
 ### Order Route
 

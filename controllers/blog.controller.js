@@ -8,7 +8,7 @@ import {
 } from "../models/blog.model.js";
 import { getCommentsByBlog } from "../models/comment.model.js";
 
-//Current data
+// *Current data
 // {
 //   "title": "The Ultimate Guide to Indoor Plant Care",
 //   "content": "Learn how to keep your indoor plants thriving with these expert tips and tricks.",
@@ -19,7 +19,7 @@ import { getCommentsByBlog } from "../models/comment.model.js";
 //   "author": "John Doe"
 // }
 
-//Expected data
+// !Expected data
 // {
 //       id: "1",
 //       title: "The Ultimate Guide to Indoor Plant Care",
