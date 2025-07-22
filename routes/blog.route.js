@@ -1,18 +1,24 @@
 import { Router } from "express";
-
-import { create, list, details } from "../controllers/blog.controller.js";
-import { createComment } from "../controllers/comment.controller.js";
+import {
+  create,
+  list,
+  details,
+  update,
+  remove,
+} from "../controllers/blog.controller.js";
 import auth from "../middlewares/auth.middleware.js";
 import role from "../middlewares/role.middleware.js";
 
 const blogRouter = Router();
-// Public
-blogRouter.get("/", list); // ?search=...&category=...
-blogRouter.get("/:id", details);
 
-blogRouter.post("/", auth, role("admin"), create);
+// Public routes
+blogRouter.get("/", list);
+blogRouter.get("/:id", details); // Supports both ID and slug
 
-// Authenticated users can comment
-blogRouter.post("/:blogId/comments", auth, createComment);
+// Protected admin routes
+//auth,role("admin"),
+blogRouter.post("/", create);
+blogRouter.put("/:id", auth, role("admin"), update);
+blogRouter.delete("/:id", auth, role("admin"), remove);
 
 export default blogRouter;
