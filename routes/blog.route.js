@@ -17,7 +17,7 @@ blogRouter.get("/:id", details); // Supports both ID and slug
 
 // Protected admin routes
 //auth,role("admin"),
-blogRouter.post("/", auth, role("admin"), create);
+blogRouter.post("/", create);
 blogRouter.put("/:id", auth, role("admin"), update);
 blogRouter.delete("/:id", auth, role("admin"), remove);
 
