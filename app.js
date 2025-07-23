@@ -18,6 +18,7 @@ import orderRouter from "./routes/order.route.js";
 import adminDashboard from "./routes/adminDashboard.route.js";
 import userDashboard from "./routes/userDashboard.route.js";
 import adminAuthRouter from "./routes/admin.route.js";
+import adminUsers from "./routes/adminUsers.route.js";
 
 dotenv.config();
 // Middleware
@@ -53,6 +54,8 @@ app.get("/test-db", async (req, res) => {
 // Routes
 app.use("/api/v1/auth/admin", adminAuthRouter);
 app.use("/api/v1/admin", adminDashboard);
+app.use("/api/v1/admin/users", adminUsers);
+
 app.use("/api/v1/user", userDashboard);
 // app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/orders", orderRouter);

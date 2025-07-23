@@ -1,52 +1,50 @@
+// controllers/adminDashboard.controller.js
 import pool from "../db.js";
+import { getAllUsers, getUserStats } from "../models/user.model.js"; // Import new functions
 
 export const getAdminDashboard = async (req, res) => {
   try {
-    // i) Blog Post Count
-    const blogs = await pool.query(
-      "SELECT * FROM blogs ORDER BY created_at DESC"
-    );
+    // Existing dashboard data
+    const [blogs, pendingSellers, allSellers, photos, products, payments] =
+      await Promise.all([
+        pool.query("SELECT * FROM blogs ORDER BY created_at DESC"),
+        pool.query("SELECT * FROM sellers WHERE status = 'pending'"),
+        pool.query("SELECT * FROM sellers"),
+        pool.query("SELECT * FROM ai_photos ORDER BY uploaded_at DESC"),
+        pool.query("SELECT * FROM products ORDER BY created_at DESC"),
+        pool.query("SELECT * FROM payments ORDER BY created_at DESC"),
+      ]);
 
-    // ii) Pending Sellers
-    const pendingSellers = await pool.query(
-      "SELECT * FROM sellers WHERE status = 'pending'"
-    );
+    // New user data and statistics using model functions
+    const [users, userStats] = await Promise.all([
+      getAllUsers(),
+      getUserStats(),
+    ]);
 
-    // iii) All Sellers
-    const allSellers = await pool.query("SELECT * FROM sellers");
-
-    // iv) All Users
-    const allUsers = await pool.query(
-      "SELECT id, name, email, created_at FROM users WHERE role = 'user'"
-    );
-
-    // v) User Uploaded Photos
-    const photos = await pool.query(
-      "SELECT * FROM ai_photos ORDER BY uploaded_at DESC"
-    );
-
-    // vi) Products + Stock
-    const products = await pool.query(
-      "SELECT * FROM products ORDER BY created_at DESC"
-    );
-
-    // vii) Payments
-    const payments = await pool.query(
-      "SELECT * FROM payments ORDER BY created_at DESC"
-    );
+    // Calculate average orders per active user
+    const avgOrders =
+      userStats.active_users > 0
+        ? userStats.total_orders_by_active / userStats.active_users
+        : 0;
 
     res.json({
       blogs: blogs.rows,
       pendingSellers: pendingSellers.rows,
       sellers: allSellers.rows,
-      users: allUsers.rows,
       photos: photos.rows,
       products: products.rows,
       payments: payments.rows,
+      users, // New user table data
+      userStats: {
+        // New statistics
+        ...userStats,
+        avg_orders_per_active: parseFloat(avgOrders.toFixed(2)),
+      },
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ msg: "Failed to load admin dashboard", error: err.message });
+    res.status(500).json({
+      msg: "Failed to load admin dashboard",
+      error: err.message,
+    });
   }
 };

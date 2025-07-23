@@ -6,7 +6,8 @@ import {
   updateBlog,
   deleteBlog,
 } from "../models/blog.model.js";
-import { getCommentsByBlog } from "../models/comment.model.js";
+// import { getCommentsByBlog } from "../models/comment.model
+// .js";
 
 // *Current data
 // {
@@ -74,8 +75,8 @@ export const details = async (req, res) => {
 
     if (!blog) return res.status(404).json({ msg: "Blog not found" });
 
-    const comments = await getCommentsByBlog(blog.id);
-    res.json({ ...blog, comments });
+    // const comments = await getCommentsByBlog(blog.id);
+    res.json({ ...blog });
   } catch (err) {
     res.status(500).json({ msg: "Error fetching blog", error: err.message });
   }

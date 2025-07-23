@@ -1,5 +1,6 @@
 import pool from "../db.js";
 
+// Existing functions (keep unchanged)
 export const createUser = async (name, email, password) => {
   try {
     const result = await pool.query(
@@ -8,8 +9,8 @@ export const createUser = async (name, email, password) => {
     );
     return result.rows[0];
   } catch (err) {
-    console.error("DB insert error:", err); // Log full DB error
-    throw err; // Rethrow to let controller handle it
+    console.error("DB insert error:", err);
+    throw err;
   }
 };
 
@@ -20,4 +21,74 @@ export const findUserByEmail = async (email) => {
   return result.rows[0];
 };
 
-// module.exports = { createUser, findUserByEmail };
+// New admin dashboard functions
+export const getAllUsers = async () => {
+  const query = `
+    SELECT 
+      u.id, u.name, u.email, u.created_at AS joining_date, 
+      u.status, u.role,
+      COUNT(o.id) AS orders
+    FROM users u
+    LEFT JOIN orders o ON u.id = o.user_id
+    WHERE u.role IN ('user', 'VIP')
+    GROUP BY u.id
+    ORDER BY u.created_at DESC
+  `;
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+export const getUserStats = async () => {
+  const query = `
+    SELECT 
+      COUNT(*) AS total_users,
+      COUNT(*) FILTER (WHERE status = 'active') AS active_users,
+      COUNT(*) FILTER (WHERE role = 'VIP') AS vip_users,
+      COALESCE(SUM(order_counts.order_count) FILTER (WHERE u.status = 'active'), 0) AS total_orders_by_active
+    FROM users u
+    LEFT JOIN (
+      SELECT user_id, COUNT(*) AS order_count 
+      FROM orders 
+      GROUP BY user_id
+    ) AS order_counts ON u.id = order_counts.user_id
+    WHERE u.role IN ('user', 'VIP')
+  `;
+  const { rows } = await pool.query(query);
+  return rows[0];
+};
+
+export const getUserById = async (id) => {
+  const query = `
+    SELECT id, name, email, created_at, status, role 
+    FROM users WHERE id = $1
+  `;
+  const { rows } = await pool.query(query, [id]);
+  return rows[0];
+};
+
+export const updateUser = async (id, updates) => {
+  const { name, email, status, role } = updates;
+  const query = `
+    UPDATE users 
+    SET name = $1, email = $2, status = $3, role = $4 
+    WHERE id = $5 
+    RETURNING id, name, email, created_at, status, role
+  `;
+  const { rows } = await pool.query(query, [name, email, status, role, id]);
+  return rows[0];
+};
+
+export const deleteUser = async (id) => {
+  await pool.query("DELETE FROM users WHERE id = $1", [id]);
+};
+
+export const getUserOrders = async (userId) => {
+  const query = `
+    SELECT * 
+    FROM orders 
+    WHERE user_id = $1 
+    ORDER BY created_at DESC
+  `;
+  const { rows } = await pool.query(query, [userId]);
+  return rows;
+};
