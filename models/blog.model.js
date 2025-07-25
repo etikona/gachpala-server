@@ -1,17 +1,61 @@
 import pool from "../db.js";
 import { generateSlug } from "../utils/slugify.js"; // New utility
 
+//New Create
+// export const createBlog = async (blogData) => {
+//   const {
+//     title,
+//     slug,
+//     content,
+//     category,
+//     excerpt,
+//     image,
+//     tags,
+//     author,
+//     publish_date
+//   } = blogData;
+
+//   const res = await pool.query(
+//     `INSERT INTO blogs (
+//       title, slug, content, category, excerpt, image, tags, author, publish_date
+//     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+//     [
+//       title,
+//       slug,
+//       content,
+//       category,
+//       excerpt,
+//       image,
+//       tags,
+//       author,
+//       publish_date
+//     ]
+//   );
+
+//   return res.rows[0];
+// };
+
 // CREATE
 export const createBlog = async (blogData) => {
-  const { title, content, category, excerpt, image, tags, author } = blogData;
-  const slug = blogData.slug || generateSlug(title);
+  const {
+    title,
+    slug,
+    content,
+    category,
+    excerpt,
+    image,
+    tags,
+    author,
+    publish_date,
+  } = blogData;
 
   const res = await pool.query(
     `INSERT INTO blogs (
-      title, slug, content, category, excerpt, image, tags, author
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-    [title, slug, content, category, excerpt, image, tags, author]
+      title, slug, content, category, excerpt, image, tags, author, publish_date
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+    [title, slug, content, category, excerpt, image, tags, author, publish_date]
   );
+
   return res.rows[0];
 };
 

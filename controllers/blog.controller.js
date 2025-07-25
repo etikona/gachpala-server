@@ -35,24 +35,97 @@ import {
 //       tags: ["indoor plants", "care tips", "beginners"],
 //       image: "/assets/blog1.jpg",
 //     },
-// CREATE
+
+//New CREATE
+
 export const create = async (req, res) => {
   try {
-    const { title, content, category, excerpt, image, tags, author } = req.body;
+    // Extract text fields from request body
+    const {
+      title,
+      slug,
+      content,
+      category,
+      excerpt,
+      tags,
+      author,
+      publishDate,
+    } = req.body;
+
+    // Handle uploaded image
+    const image = req.file ? `/uploads/blogs/${req.file.filename}` : null;
+
+    // Parse tags into array
+    let tagsArray = [];
+    if (tags) {
+      if (typeof tags === "string") {
+        try {
+          // Try parsing as JSON array
+          tagsArray = JSON.parse(tags);
+        } catch {
+          // Fallback to comma-separated string
+          tagsArray = tags.split(",").map((tag) => tag.trim());
+        }
+      } else if (Array.isArray(tags)) {
+        tagsArray = tags;
+      }
+    }
+
+    // Create blog with all fields
     const blog = await createBlog({
       title,
+      slug,
       content,
       category,
       excerpt,
       image,
-      tags,
+      tags: tagsArray,
       author,
+      publish_date: publishDate || new Date().toISOString().split("T")[0],
     });
+
     res.status(201).json(blog);
   } catch (err) {
-    res.status(500).json({ msg: "Error creating blog", error: err.message });
+    // Handle Multer errors
+    if (err.message && err.message.includes("Only image files are allowed")) {
+      return res.status(400).json({ msg: err.message });
+    }
+
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ msg: "File too large. Max size is 5MB." });
+    }
+
+    // Handle database errors
+    if (err.code === "23505") {
+      // Unique constraint violation
+      return res.status(400).json({ msg: "Slug must be unique" });
+    }
+
+    res.status(500).json({
+      msg: "Error creating blog",
+      error: err.message,
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    });
   }
 };
+// CREATE
+// export const create = async (req, res) => {
+//   try {
+//     const { title, content, category, excerpt, image, tags, author } = req.body;
+//     const blog = await createBlog({
+//       title,
+//       content,
+//       category,
+//       excerpt,
+//       image,
+//       tags,
+//       author,
+//     });
+//     res.status(201).json(blog);
+//   } catch (err) {
+//     res.status(500).json({ msg: "Error creating blog", error: err.message });
+//   }
+// };
 
 // READ ALL
 export const list = async (req, res) => {

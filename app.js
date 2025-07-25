@@ -4,8 +4,12 @@ import { PORT } from "./config/env.js";
 import "./db-init.js";
 
 import cors from "cors";
+// import { fileURLToPath } from "url";
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 const app = express();
 import pool from "./db.js";
+import path from "path";
 import authRouter from "./routes/auth.route.js";
 import protectedRoute from "./routes/protected.route.js";
 
@@ -31,6 +35,8 @@ app.use(
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// Serve static files from root directory
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Immediately test connection
 

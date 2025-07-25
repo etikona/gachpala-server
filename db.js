@@ -13,7 +13,7 @@ const connectionConfig = {
 // Force SSL in production (required for Render PostgreSQL)
 if (isProduction) {
   connectionConfig.ssl = {
-    rejectUnauthorized: false, // Bypass SSL certificate validation
+    rejectUnauthorized: false,
   };
 }
 
