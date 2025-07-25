@@ -102,26 +102,18 @@ export const updateBlog = async (id, updates) => {
   let paramIndex = 1;
 
   Object.entries(updates).forEach(([key, value]) => {
-    if (key === "title" && updates.slug === undefined) {
-      fields.push("slug");
-      values.push(generateSlug(value));
-    }
     if (value !== undefined) {
-      fields.push(key);
+      fields.push(`${key} = $${paramIndex++}`);
       values.push(value);
     }
   });
 
   if (fields.length === 0) throw new Error("No fields to update");
 
-  const setClause = fields
-    .map((field, index) => `${field} = $${index + 1}`)
-    .join(", ");
-
   const query = `
     UPDATE blogs
-    SET ${setClause}
-    WHERE id = $${fields.length + 1}
+    SET ${fields.join(", ")}
+    WHERE id = $${paramIndex}
     RETURNING *
   `;
   const res = await pool.query(query, [...values, id]);
@@ -130,5 +122,20 @@ export const updateBlog = async (id, updates) => {
 
 // DELETE
 export const deleteBlog = async (id) => {
+  const blogRes = await pool.query("SELECT image FROM blogs WHERE id = $1", [
+    id,
+  ]);
+  const blog = blogRes.rows[0];
+
+  if (!blog) throw new Error("Blog not found");
+
+  // Delete image file if exists
+  if (blog.image) {
+    const imagePath = path.join(process.cwd(), blog.image);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+  }
+
   await pool.query("DELETE FROM blogs WHERE id = $1", [id]);
 };
