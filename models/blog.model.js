@@ -97,15 +97,19 @@ export const getBlogBySlug = async (slug) => {
 
 // UPDATE
 export const updateBlog = async (id, updates) => {
+  // Remove undefined values
+  const cleanUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([_, v]) => v !== undefined)
+  );
+
   const fields = [];
   const values = [];
   let paramIndex = 1;
 
-  Object.entries(updates).forEach(([key, value]) => {
-    if (value !== undefined) {
-      fields.push(`${key} = $${paramIndex++}`);
-      values.push(value);
-    }
+  Object.entries(cleanUpdates).forEach(([key, value]) => {
+    fields.push(`${key} = $${paramIndex}`);
+    values.push(value);
+    paramIndex++;
   });
 
   if (fields.length === 0) throw new Error("No fields to update");
@@ -116,6 +120,7 @@ export const updateBlog = async (id, updates) => {
     WHERE id = $${paramIndex}
     RETURNING *
   `;
+
   const res = await pool.query(query, [...values, id]);
   return res.rows[0];
 };

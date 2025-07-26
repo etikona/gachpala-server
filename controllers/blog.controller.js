@@ -159,8 +159,14 @@ export const details = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
+    const numericId = parseInt(id);
+
+    if (isNaN(numericId)) {
+      return res.status(400).json({ error: "Invalid ID format" });
+    }
+
     const updates = req.body;
-    const updatedBlog = await updateBlog(id, updates);
+    const updatedBlog = await updateBlog(numericId, updates);
     res.json(updatedBlog);
   } catch (err) {
     res.status(500).json({ msg: "Error updating blog", error: err.message });
