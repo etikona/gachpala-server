@@ -117,7 +117,7 @@ export const updateBlog = async (id, updates) => {
   const query = `
     UPDATE blogs
     SET ${fields.join(", ")}
-    WHERE id = $${paramIndex}
+    WHERE id = $${paramIndex}  // Keep as string
     RETURNING *
   `;
 
