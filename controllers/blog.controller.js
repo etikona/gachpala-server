@@ -160,11 +160,25 @@ export const update = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Remove any numeric conversion - use string ID directly
-    const updates = req.body;
+    // Process FormData
+    const updates = {};
+    for (const [key, value] of Object.entries(req.body)) {
+      if (key === "tags" && typeof value === "string") {
+        updates[key] = value.split(",").map((tag) => tag.trim());
+      } else {
+        updates[key] = value;
+      }
+    }
+
+    // Handle file separately
+    if (req.file) {
+      updates.image = req.file.path; // Store file path
+    }
+
     const updatedBlog = await updateBlog(id, updates);
     res.json(updatedBlog);
   } catch (err) {
+    console.error("Update error:", err);
     res.status(500).json({ msg: "Error updating blog", error: err.message });
   }
 };

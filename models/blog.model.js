@@ -97,32 +97,53 @@ export const getBlogBySlug = async (slug) => {
 
 // UPDATE
 export const updateBlog = async (id, updates) => {
-  // Remove undefined values
-  const cleanUpdates = Object.fromEntries(
-    Object.entries(updates).filter(([_, v]) => v !== undefined)
-  );
+  // Filter out undefined values and convert to snake_case
+  const cleanUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+    if (value !== undefined) {
+      // Convert camelCase to snake_case
+      const snakeKey = key.replace(
+        /[A-Z]/g,
+        (letter) => `_${letter.toLowerCase()}`
+      );
+      acc[snakeKey] = value;
+    }
+    return acc;
+  }, {});
+
+  if (Object.keys(cleanUpdates).length === 0) {
+    throw new Error("No fields to update");
+  }
 
   const fields = [];
   const values = [];
   let paramIndex = 1;
 
   Object.entries(cleanUpdates).forEach(([key, value]) => {
-    fields.push(`${key} = $${paramIndex}`);
+    // Quote column names to prevent SQL errors
+    fields.push(`"${key}" = $${paramIndex}`);
     values.push(value);
     paramIndex++;
   });
 
-  if (fields.length === 0) throw new Error("No fields to update");
+  const query = {
+    text: `
+      UPDATE blogs
+      SET ${fields.join(", ")}
+      WHERE id = $${paramIndex}
+      RETURNING *
+    `,
+    values: [...values, id],
+  };
 
-  const query = `
-    UPDATE blogs
-    SET ${fields.join(", ")}
-    WHERE id = $${paramIndex}  // Keep as string
-    RETURNING *
-  `;
+  console.log("Executing query:", query.text, query.values);
 
-  const res = await pool.query(query, [...values, id]);
-  return res.rows[0];
+  try {
+    const res = await pool.query(query);
+    return res.rows[0];
+  } catch (err) {
+    console.error("Database error:", err);
+    throw new Error(`Database error: ${err.message}`);
+  }
 };
 
 // DELETE
