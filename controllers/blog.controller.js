@@ -159,11 +159,21 @@ export const details = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
 
-    // Log received data for debugging
-    console.log("Received update request for ID:", id);
-    console.log("Updates:", updates);
+    // Process FormData
+    const updates = {};
+    for (const [key, value] of Object.entries(req.body)) {
+      if (key === "tags" && typeof value === "string") {
+        updates[key] = value.split(",").map((tag) => tag.trim());
+      } else {
+        updates[key] = value;
+      }
+    }
+
+    // Handle file separately
+    if (req.file) {
+      updates.image = req.file.path; // Store file path
+    }
 
     const updatedBlog = await updateBlog(id, updates);
     res.json(updatedBlog);
