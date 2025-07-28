@@ -1,6 +1,7 @@
 import pool from "../db.js";
 import { generateSlug } from "../utils/slugify.js"; // New utility
-
+import path from "path";
+import fs from "fs";
 //New Create
 // export const createBlog = async (blogData) => {
 //   const {
