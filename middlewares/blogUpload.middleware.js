@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 
 // Create blog-specific upload directory
-const blogDir = "uploads/blog";
+const blogDir = "uploads/blogs";
 if (!fs.existsSync(blogDir)) {
   fs.mkdirSync(blogDir, { recursive: true });
 }

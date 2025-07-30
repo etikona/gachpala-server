@@ -6,6 +6,8 @@ import {
   updateBlog,
   deleteBlog,
 } from "../models/blog.model.js";
+import { validationResult } from "express-validator";
+import slugify from "slugify";
 // import { getCommentsByBlog } from "../models/comment.model
 // .js";
 
@@ -41,6 +43,9 @@ import {
 export const create = async (req, res) => {
   try {
     // Extract text fields from request body
+    // if (!req.body) {
+    //   return res.status(400).json({ msg: "No body data received" });
+    // }
     const {
       title,
       slug,
@@ -51,6 +56,9 @@ export const create = async (req, res) => {
       author,
       publishDate,
     } = req.body;
+    // if (!title || !slug || !content) {
+    //   return res.status(400).json({ msg: "Missing required blog fields" });
+    // }
 
     // Handle uploaded image
     const image = req.file ? `/uploads/blogs/${req.file.filename}` : null;
@@ -108,6 +116,7 @@ export const create = async (req, res) => {
     });
   }
 };
+
 // CREATE
 // export const create = async (req, res) => {
 //   try {
