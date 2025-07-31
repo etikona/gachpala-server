@@ -22,7 +22,8 @@ export const findUserByEmail = async (email) => {
 };
 
 // New admin dashboard functions
-export const getAllUsers = async () => {
+export const getAllUsers = async (page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
   const query = `
     SELECT 
       u.id, u.name, u.email, u.created_at AS joining_date, 
@@ -33,9 +34,17 @@ export const getAllUsers = async () => {
     WHERE u.role IN ('user', 'VIP')
     GROUP BY u.id
     ORDER BY u.created_at DESC
+    LIMIT $1 OFFSET $2
   `;
-  const { rows } = await pool.query(query);
+  const { rows } = await pool.query(query, [limit, offset]);
   return rows;
+};
+
+export const getTotalUsersCount = async () => {
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) FROM users WHERE role IN ('user', 'VIP')`
+  );
+  return parseInt(rows[0].count);
 };
 
 export const getUserStats = async () => {
@@ -44,7 +53,7 @@ export const getUserStats = async () => {
       COUNT(*) AS total_users,
       COUNT(*) FILTER (WHERE status = 'active') AS active_users,
       COUNT(*) FILTER (WHERE role = 'VIP') AS vip_users,
-      COALESCE(SUM(order_counts.order_count) FILTER (WHERE u.status = 'active'), 0) AS total_orders_by_active
+      COALESCE(AVG(order_counts.order_count) FILTER (WHERE u.status = 'active'), 0) AS avg_orders_per_active
     FROM users u
     LEFT JOIN (
       SELECT user_id, COUNT(*) AS order_count 
@@ -56,7 +65,6 @@ export const getUserStats = async () => {
   const { rows } = await pool.query(query);
   return rows[0];
 };
-
 export const getUserById = async (id) => {
   const query = `
     SELECT id, name, email, created_at, status, role 

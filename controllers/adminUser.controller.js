@@ -4,6 +4,9 @@ import {
   updateUser,
   deleteUser,
   getUserOrders,
+  getAllUsers,
+  getTotalUsersCount,
+  getUserStats,
 } from "../models/user.model.js";
 
 export const getUserProfile = async (req, res) => {
@@ -55,5 +58,56 @@ export const getUserOrderHistory = async (req, res) => {
     res.json(orders);
   } catch (err) {
     res.status(500).json({ msg: "Failed to get orders", error: err.message });
+  }
+};
+
+export const getUsersList = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const users = await getAllUsers(page, limit);
+    const totalUsers = await getTotalUsersCount();
+
+    res.json({
+      users,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalUsers / limit),
+        totalUsers,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ msg: "Failed to get users", error: err.message });
+  }
+};
+
+export const getDashboardStats = async (req, res) => {
+  try {
+    const stats = await getUserStats();
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ msg: "Failed to get stats", error: err.message });
+  }
+};
+
+export const toggleUserStatus = async (req, res) => {
+  try {
+    const user = await getUserById(req.params.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    const newStatus = user.status === "active" ? "suspended" : "active";
+    const updatedUser = await updateUser(req.params.id, { status: newStatus });
+
+    res.json({
+      ...updatedUser,
+      msg: `Account ${
+        newStatus === "suspended" ? "suspended" : "activated"
+      } successfully`,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ msg: "Failed to update status", error: err.message });
   }
 };
