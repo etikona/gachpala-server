@@ -12,7 +12,7 @@ import {
 export const getUserProfile = async (req, res) => {
   try {
     const user = await getUserById(req.params.id);
-    if (!user) return res.status(404).json({ msg: "User not found" });
+    if (!user) return res.status(404).json({ msg: "User is missing" });
     res.json(user);
   } catch (err) {
     res
