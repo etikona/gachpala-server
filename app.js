@@ -62,7 +62,7 @@ app.get("/test-db", async (req, res) => {
 app.use("/api/v1/auth/admin", adminAuthRouter);
 app.use("/api/v1/admin", adminDashboard);
 app.use("/api/v1/admin/users", adminUsers);
-app.use("/api/admin/sellers", adminSellerRoute);
+app.use("/api/v1/admin/sellers", adminSellerRoute);
 app.use("/api/v1/user", userDashboard);
 // app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/orders", orderRouter);

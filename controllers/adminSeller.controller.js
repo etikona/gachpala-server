@@ -7,7 +7,7 @@ import {
   suspendSeller,
   deleteSeller,
   createSellerByAdmin,
-} from "../models/adminSellerModel.js";
+} from "../models/adminSeller.model.js";
 
 // Get seller statistics for admin dashboard
 export const getAdminSellerStats = async (req, res) => {
@@ -31,6 +31,7 @@ export const getAdminSellers = async (req, res) => {
       status,
       search
     );
+    console.log(result);
     res.json(result);
   } catch (err) {
     res.status(500).json({ msg: "Failed to get sellers", error: err.message });

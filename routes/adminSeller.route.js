@@ -1,5 +1,5 @@
 // routes/adminSellerRoutes.js
-import express from "express";
+
 import { Router } from "express";
 import {
   getAdminSellerStats,
@@ -9,31 +9,28 @@ import {
   suspendAdminSeller,
   deleteAdminSeller,
   createAdminSeller,
-} from "../controllers/adminSellerController.js";
-import { adminAuth } from "../middleware/authMiddleware.js";
+} from "../controllers/adminSeller.controller.js";
+// import { adminAuth } from "../middleware/authMiddleware.js";
 // Assuming you have admin auth middleware
 
 const adminSellerRoute = Router();
 
-// Admin seller statistics
-adminSellerRoute.get("/stats", adminAuth, getAdminSellerStats);
+adminSellerRoute.get("/test", (req, res) => {
+  res.send("Admin Seller Route is working!");
+});
 
-// Get all sellers with pagination
-adminSellerRoute.get("/", adminAuth, getAdminSellers);
+adminSellerRoute.get("/stats", getAdminSellerStats);
 
-// Get single seller details
-adminSellerRoute.get("/:id", adminAuth, getAdminSellerDetails);
+adminSellerRoute.get("/", getAdminSellers);
 
-// Update seller details
-adminSellerRoute.put("/:id", adminAuth, updateAdminSeller);
+adminSellerRoute.get("/:id", getAdminSellerDetails);
 
-// Suspend seller account
-adminSellerRoute.put("/:id/suspend", adminAuth, suspendAdminSeller);
+adminSellerRoute.put("/:id", updateAdminSeller);
 
-// Delete seller account
-adminSellerRoute.delete("/:id", adminAuth, deleteAdminSeller);
+adminSellerRoute.put("/:id/suspend", suspendAdminSeller);
 
-// Create new seller from admin panel
-adminSellerRoute.post("/", adminAuth, createAdminSeller);
+adminSellerRoute.delete("/:id", deleteAdminSeller);
+
+adminSellerRoute.post("/", createAdminSeller);
 
 export default adminSellerRoute;

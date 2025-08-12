@@ -26,7 +26,7 @@ export const getSellerStatistics = async () => {
   };
 };
 
-// Get all sellers with pagination and filtering
+//! Get all sellers with pagination and filtering
 export const getAllSellers = async (
   page = 1,
   limit = 10,
@@ -35,6 +35,7 @@ export const getAllSellers = async (
 ) => {
   const offset = (page - 1) * limit;
 
+  // Base query using ONLY columns that exist in your schema
   let query = `
     SELECT 
       s.id, 
@@ -42,21 +43,23 @@ export const getAllSellers = async (
       s.full_name as owner_name, 
       s.created_at as joining_date, 
       s.status,
-      s.is_verified,
-      s.rating,
+      s.approved as is_approved,  
+      COALESCE(s.rating, 0) as rating,
       COUNT(p.id) as products_count
-    FROM sellers s
-    LEFT JOIN products p ON s.id = p.seller_id
+    FROM public.sellers s
+    LEFT JOIN public.products p ON s.id = p.seller_id
   `;
 
   const queryParams = [];
-  let whereClauses = [];
+  const whereClauses = [];
 
+  // Status filter (using the confirmed 'status' column)
   if (status) {
     whereClauses.push(`s.status = $${queryParams.length + 1}`);
     queryParams.push(status);
   }
 
+  // Search filter
   if (search) {
     whereClauses.push(
       `(s.business_name ILIKE $${
@@ -75,28 +78,39 @@ export const getAllSellers = async (
     ORDER BY s.created_at DESC
     LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
   `;
-
   queryParams.push(limit, offset);
 
-  const sellers = await pool.query(query, queryParams);
+  try {
+    const sellers = await pool.query(query, queryParams);
 
-  // Get total count for pagination
-  let countQuery = "SELECT COUNT(*) FROM sellers s";
-  if (whereClauses.length > 0) {
-    countQuery += ` WHERE ${whereClauses.join(" AND ")}`;
+    // Get total count
+    let countQuery = `SELECT COUNT(*) FROM public.sellers s`;
+    if (whereClauses.length > 0) {
+      countQuery += ` WHERE ${whereClauses.join(" AND ")}`;
+    }
+
+    const totalCount = await pool.query(countQuery, queryParams.slice(0, -2));
+
+    return {
+      sellers: sellers.rows,
+      pagination: {
+        total: parseInt(totalCount.rows[0].count),
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount.rows[0].count / limit),
+      },
+    };
+  } catch (err) {
+    console.error("Database Error:", {
+      query,
+      params: queryParams,
+      error: err.message,
+    });
+    throw new Error("Failed to fetch sellers: " + err.message);
   }
-
-  const totalCount = await pool.query(countQuery, queryParams.slice(0, -2));
-
-  return {
-    sellers: sellers.rows,
-    total: parseInt(totalCount.rows[0].count),
-    page,
-    totalPages: Math.ceil(totalCount.rows[0].count / limit),
-  };
 };
 
-// Get seller details by ID
+//! Get seller details by ID
 export const getSellerById = async (id) => {
   const seller = await pool.query(
     `
