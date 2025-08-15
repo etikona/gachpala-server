@@ -12,7 +12,7 @@ import {
 } from "../controllers/adminSeller.controller.js";
 // import { adminAuth } from "../middleware/authMiddleware.js";
 // Assuming you have admin auth middleware
-
+import sellerUpload from "../middlewares/sellerUpload.middleware.js";
 const adminSellerRoute = Router();
 
 adminSellerRoute.get("/test", (req, res) => {
@@ -25,7 +25,7 @@ adminSellerRoute.get("/", getAdminSellers);
 
 adminSellerRoute.get("/:id", getAdminSellerDetails);
 
-adminSellerRoute.put("/:id", updateAdminSeller);
+adminSellerRoute.put("/:id", sellerUpload, updateAdminSeller);
 
 adminSellerRoute.put("/:id/suspend", suspendAdminSeller);
 

@@ -53,15 +53,54 @@ export const getAdminSellerDetails = async (req, res) => {
   }
 };
 
-// Update seller details
+//! Update seller details
 export const updateAdminSeller = async (req, res) => {
   try {
-    const seller = await updateSeller(req.params.id, req.body);
-    res.json(seller);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ msg: "Failed to update seller", error: err.message });
+    // Log incoming request for debugging
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+
+    // Validate request contains data
+    if (!req.body && !req.files) {
+      return res.status(400).json({ error: "No data provided for update" });
+    }
+
+    // Prepare update data
+    const updateData = {
+      ...req.body,
+      ...(req.files?.govt_id_proof && {
+        govt_id_proof: `/uploads/sellers/${req.files.govt_id_proof[0].filename}`,
+      }),
+      ...(req.files?.business_license && {
+        business_license: `/uploads/sellers/${req.files.business_license[0].filename}`,
+      }),
+      ...(req.files?.profile_photo && {
+        profile_photo_or_logo: `/uploads/sellers/${req.files.profile_photo[0].filename}`,
+      }),
+    };
+
+    // Remove empty fields
+    Object.keys(updateData).forEach((key) => {
+      if (updateData[key] === undefined || updateData[key] === "") {
+        delete updateData[key];
+      }
+    });
+
+    // Validate we have at least one field to update
+    if (Object.keys(updateData).length === 0) {
+      return res
+        .status(400)
+        .json({ error: "No valid fields provided for update" });
+    }
+
+    const updatedSeller = await updateSeller(req.params.id, updateData);
+    res.json(updatedSeller);
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({
+      error: error.message || "Failed to update seller",
+      ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
+    });
   }
 };
 

@@ -1,29 +1,43 @@
 // models/adminSellerModel.js
 import pool from "../db.js";
 
-// Get seller statistics for admin dashboard
+// !Get seller statistics for admin dashboard
 export const getSellerStatistics = async () => {
-  const totalSellers = await pool.query("SELECT COUNT(*) FROM sellers");
-  const activeSellers = await pool.query(
-    "SELECT COUNT(*) FROM sellers WHERE status = 'active'"
-  );
-  const verifiedSellers = await pool.query(
-    "SELECT COUNT(*) FROM sellers WHERE is_verified = true"
-  );
-  const pendingSellers = await pool.query(
-    "SELECT COUNT(*) FROM sellers WHERE status = 'pending'"
-  );
-  const avgRating = await pool.query(
-    "SELECT AVG(rating) FROM sellers WHERE rating > 0"
-  );
+  try {
+    // Using only columns we know exist from your schema
+    const totalSellers = await pool.query("SELECT COUNT(*) FROM sellers");
+    const activeSellers = await pool.query(
+      "SELECT COUNT(*) FROM sellers WHERE status = 'active'"
+    );
+    const approvedSellers = await pool.query(
+      "SELECT COUNT(*) FROM sellers WHERE approved = true" // Changed from is_approved to approved
+    );
+    const pendingSellers = await pool.query(
+      "SELECT COUNT(*) FROM sellers WHERE status = 'pending'"
+    );
 
-  return {
-    totalSellers: parseInt(totalSellers.rows[0].count),
-    activeSellers: parseInt(activeSellers.rows[0].count),
-    verifiedSellers: parseInt(verifiedSellers.rows[0].count),
-    pendingSellers: parseInt(pendingSellers.rows[0].count),
-    avgRating: parseFloat(avgRating.rows[0].avg) || 0,
-  };
+    // Handle rating only if column exists (wrap in try-catch)
+    let avgRating = 0;
+    try {
+      const ratingResult = await pool.query(
+        "SELECT AVG(rating) FROM sellers WHERE rating > 0"
+      );
+      avgRating = parseFloat(ratingResult.rows[0].avg) || 0;
+    } catch (ratingError) {
+      console.log("Rating column not available, using default 0");
+    }
+
+    return {
+      totalSellers: parseInt(totalSellers.rows[0].count),
+      activeSellers: parseInt(activeSellers.rows[0].count),
+      verifiedSellers: parseInt(approvedSellers.rows[0].count), // Using approved count as verified
+      pendingSellers: parseInt(pendingSellers.rows[0].count),
+      avgRating: avgRating, // Will be 0 if rating column doesn't exist
+    };
+  } catch (err) {
+    console.error("Error in getSellerStatistics:", err);
+    throw err;
+  }
 };
 
 //! Get all sellers with pagination and filtering
@@ -34,7 +48,12 @@ export const getAllSellers = async (
   search = ""
 ) => {
   const offset = (page - 1) * limit;
-
+  const debug = await pool.query(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name = 'sellers'
+  `);
+  console.log("Seller table columns:", debug.rows);
   // Base query using ONLY columns that exist in your schema
   let query = `
     SELECT 
@@ -128,46 +147,88 @@ export const getSellerById = async (id) => {
   return seller.rows[0];
 };
 
-// Update seller details
-export const updateSeller = async (id, data) => {
-  const {
-    full_name,
-    business_name,
-    email,
-    phone_number,
-    status,
-    is_verified,
-    rating,
-    // Add other fields as needed
-  } = data;
+//! Update seller details
+export const updateSeller = async (id, data = {}) => {
+  try {
+    // Validate input
+    if (!id) throw new Error("Seller ID is required");
+    if (typeof data !== "object") throw new Error("Invalid update data");
 
-  const result = await pool.query(
-    `
-    UPDATE sellers SET
-      full_name = $1,
-      business_name = $2,
-      email = $3,
-      phone_number = $4,
-      status = $5,
-      is_verified = $6,
-      rating = $7,
-      updated_at = NOW()
-    WHERE id = $8
-    RETURNING *
-  `,
-    [
-      full_name,
-      business_name,
-      email,
-      phone_number,
-      status,
-      is_verified,
-      rating,
-      id,
-    ]
-  );
+    // Build dynamic query
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
 
-  return result.rows[0];
+    // List of all possible fields
+    const allowedFields = [
+      "full_name",
+      "email",
+      "phone_number",
+      "business_name",
+      "business_type",
+      "business_registration_no",
+      "country",
+      "state",
+      "city",
+      "address",
+      "website_or_social_links",
+      "gst_vat_number",
+      "business_description",
+      "status",
+      "is_verified",
+      "rating",
+      "govt_id_proof",
+      "business_license",
+      "profile_photo_or_logo",
+      "bank_account_holder_name",
+      "bank_account_number",
+      "bank_name",
+      "branch_name",
+      "swift_iban_code",
+      "paypal_id_or_payoneer",
+      "plant_types_sold",
+      "years_of_experience",
+      "preferred_language",
+      "referral_code",
+      "agree_terms_and_policy",
+    ];
+
+    // Process each field
+    allowedFields.forEach((field) => {
+      if (data[field] !== undefined) {
+        fields.push(`${field} = $${paramCount}`);
+        values.push(data[field]);
+        paramCount++;
+      }
+    });
+
+    // Validate we have fields to update
+    if (fields.length === 0) {
+      throw new Error("No valid fields provided for update");
+    }
+
+    // Add updated_at
+
+    // Execute query
+    const query = `
+      UPDATE sellers 
+      SET ${fields.join(", ")}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+    values.push(id);
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      throw new Error("Seller not found");
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw error; // Re-throw for controller to handle
+  }
 };
 
 // Suspend seller account
