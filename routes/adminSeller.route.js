@@ -31,6 +31,6 @@ adminSellerRoute.put("/:id/suspend", suspendAdminSeller);
 
 adminSellerRoute.delete("/:id", deleteAdminSeller);
 
-adminSellerRoute.post("/", createAdminSeller);
+adminSellerRoute.post("/", sellerUpload, createAdminSeller);
 
 export default adminSellerRoute;
