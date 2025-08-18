@@ -4,6 +4,11 @@ import {
   addOrderItem,
   getUserOrders,
   getOrderDetails,
+  getAllOrders,
+  getOrderStats,
+  getFullOrderDetails,
+  updateOrderStatus,
+  cancelOrder,
 } from "../models/order.model.js";
 import { createPayment } from "../models/payment.model.js";
 
@@ -76,5 +81,83 @@ export const orderDetails = async (req, res) => {
     res
       .status(500)
       .json({ msg: "Failed to fetch order details", error: err.message });
+  }
+};
+
+export const adminGetAllOrders = async (req, res) => {
+  try {
+    const orders = await getAllOrders();
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ msg: "Failed to fetch orders", error: err.message });
+  }
+};
+
+export const adminGetOrderStats = async (req, res) => {
+  try {
+    const stats = await getOrderStats();
+    res.json(stats);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ msg: "Failed to fetch order stats", error: err.message });
+  }
+};
+
+export const adminGetOrderDetails = async (req, res) => {
+  try {
+    const order = await getFullOrderDetails(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ msg: "Order not found" });
+    }
+    res.json(order);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ msg: "Failed to fetch order details", error: err.message });
+  }
+};
+
+export const adminUpdateOrderStatus = async (req, res) => {
+  // Check if body exists
+  if (!req.body) {
+    return res.status(400).json({ msg: "Request body is missing" });
+  }
+
+  const { status } = req.body;
+
+  // Check if status exists in body
+  if (!status) {
+    return res.status(400).json({ msg: "Status is required in request body" });
+  }
+
+  const validStatuses = [
+    "pending",
+    "processing",
+    "shipped",
+    "completed",
+    "cancelled",
+  ];
+
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ msg: "Invalid status value" });
+  }
+
+  try {
+    const order = await updateOrderStatus(req.params.orderId, status);
+    res.json(order);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ msg: "Failed to update order status", error: err.message });
+  }
+};
+
+export const adminCancelOrder = async (req, res) => {
+  try {
+    const order = await cancelOrder(req.params.orderId);
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ msg: "Failed to cancel order", error: err.message });
   }
 };

@@ -32,3 +32,99 @@ export const getOrderDetails = async (orderId) => {
   );
   return res.rows;
 };
+
+export const getAllOrders = async () => {
+  const res = await pool.query(
+    `SELECT o.*, u.name as customer_name, u.email as customer_email 
+     FROM orders o
+     JOIN users u ON o.user_id = u.id
+     ORDER BY o.created_at DESC`
+  );
+  return res.rows;
+};
+
+export const getOrderStats = async () => {
+  const res = await pool.query(`
+    SELECT 
+      COUNT(*) as total_orders,
+      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
+      SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) as processing_orders,
+      SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_orders,
+      SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) as shipped_orders,
+      SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_orders
+    FROM orders
+  `);
+  return res.rows[0];
+};
+
+export const getFullOrderDetails = async (orderId) => {
+  // Get order info
+  const orderRes = await pool.query(
+    `SELECT o.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone
+     FROM orders o
+     JOIN users u ON o.user_id = u.id
+     WHERE o.id = $1`,
+    [orderId]
+  );
+
+  if (orderRes.rows.length === 0) {
+    return null;
+  }
+
+  // Get order items
+  const itemsRes = await pool.query(
+    `SELECT oi.*, p.name, p.image 
+     FROM order_items oi
+     JOIN products p ON oi.product_id = p.id
+     WHERE oi.order_id = $1`,
+    [orderId]
+  );
+
+  // Get payment info
+  const paymentRes = await pool.query(
+    `SELECT * FROM payments WHERE order_id = $1`,
+    [orderId]
+  );
+
+  return {
+    ...orderRes.rows[0],
+    items: itemsRes.rows,
+    payment: paymentRes.rows[0] || null,
+  };
+};
+
+export const updateOrderStatus = async (orderId, status) => {
+  const res = await pool.query(
+    `UPDATE orders SET status = $1 WHERE id = $2 RETURNING *`,
+    [status, orderId]
+  );
+  return res.rows[0];
+};
+
+export const cancelOrder = async (orderId) => {
+  try {
+    await pool.query("BEGIN");
+
+    // Update order status
+    const order = await updateOrderStatus(orderId, "cancelled");
+
+    // Restore product stock
+    const items = await pool.query(
+      `SELECT product_id, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+
+    for (const item of items.rows) {
+      await pool.query(`UPDATE products SET stock = stock + $1 WHERE id = $2`, [
+        item.quantity,
+        item.product_id,
+      ]);
+    }
+
+    await pool.query("COMMIT");
+    return order;
+  } catch (err) {
+    await pool.query("ROLLBACK");
+    throw err;
+  }
+};
