@@ -24,6 +24,7 @@ import userDashboard from "./routes/userDashboard.route.js";
 import adminAuthRouter from "./routes/admin.route.js";
 import adminUsers from "./routes/adminUsers.route.js";
 import adminSellerRoute from "./routes/adminSeller.route.js";
+import adminOverviewRouter from "./routes/adminOverview.route.js";
 
 dotenv.config();
 // Middleware
@@ -63,6 +64,7 @@ app.use("/api/v1/auth/admin", adminAuthRouter);
 app.use("/api/v1/admin", adminDashboard);
 app.use("/api/v1/admin/users", adminUsers);
 app.use("/api/v1/admin/sellers", adminSellerRoute);
+app.use("/api/v1/admin/overview", adminOverviewRouter);
 app.use("/api/v1/user", userDashboard);
 // app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/orders", orderRouter);
