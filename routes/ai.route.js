@@ -1,15 +1,28 @@
-// import { Router } from "express";
-// import authMiddleware from "../middlewares/auth.middleware.js";
-// import upload from "../middlewares/upload.middleware.js";
-// import { analyzePlant } from "../controllers/ai.controller.js";
+// backend/routes/ai.route.js
+import { Router } from "express";
+import authMiddleware from "../middlewares/auth.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
+import {
+  analyzePlant,
+  getAnalysisHistory,
+} from "../controllers/ai.controller.js";
 
-// const aiRouter = Router();
+const aiRouter = Router();
 
-// aiRouter.post(
-//   "/plant-image",
-//   authMiddleware,
-//   upload.single("plant"),
-//   analyzePlant
-// );
+//Temporary endpoint for testing without auth
+aiRouter.post(
+  "/plant-image-test", // Different endpoint for testing without auth
+  upload.single("plant"),
+  analyzePlant
+);
 
-// export default aiRouter;
+aiRouter.post(
+  "/plant-image",
+  authMiddleware,
+  upload.single("plant"),
+  analyzePlant
+);
+
+aiRouter.get("/analysis-history", authMiddleware, getAnalysisHistory);
+
+export default aiRouter;

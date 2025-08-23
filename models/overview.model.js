@@ -5,7 +5,7 @@ export const getOverviewStats = async () => {
   const query = `
     SELECT 
       (SELECT COALESCE(SUM(total), 0) FROM orders WHERE status = 'completed') as total_revenue,
-      (SELECT COUNT(*) FROM sellers WHERE approved = true) as total_sellers,
+      (SELECT COUNT(*) FROM sellers WHERE status = 'active') as total_sellers,
       (SELECT COUNT(*) FROM users WHERE role IN ('user', 'VIP')) as total_users,
       (SELECT COUNT(*) FROM orders) as total_orders
   `;

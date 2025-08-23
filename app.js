@@ -12,8 +12,6 @@ import pool from "./db.js";
 import path from "path";
 import authRouter from "./routes/auth.route.js";
 import protectedRoute from "./routes/protected.route.js";
-
-// import aiRouter from "./routes/ai.route.js";
 import blogRouter from "./routes/blog.route.js";
 import sellerRouter from "./routes/seller.route.js";
 // import productRouter from "./routes/product.route.js";
@@ -25,6 +23,7 @@ import adminAuthRouter from "./routes/admin.route.js";
 import adminUsers from "./routes/adminUsers.route.js";
 import adminSellerRoute from "./routes/adminSeller.route.js";
 import adminOverviewRouter from "./routes/adminOverview.route.js";
+import aiRouter from "./routes/ai.route.js";
 
 dotenv.config();
 // Middleware
@@ -72,7 +71,7 @@ app.use("/api/v1/orders", orderRouter);
 
 app.use("/api/v1/seller", sellerRouter);
 app.use("/api/v1/blog", blogRouter);
-// app.use("/api/v1/ai", aiRouter);
+app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/protected", protectedRoute);
 app.use("/api/v1/auth", authRouter);
 
