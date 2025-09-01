@@ -22,6 +22,7 @@ aiRouter.post(
   upload.single("plant"),
   analyzePlant
 );
+// aiRouter.get("/api-status", getApiStatus);
 
 aiRouter.get("/analysis-history", authMiddleware, getAnalysisHistory);
 

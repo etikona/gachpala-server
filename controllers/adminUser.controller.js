@@ -1,13 +1,16 @@
 // controllers/adminUser.controller.js
 import {
-  getUserById,
+  // getUserById,
   updateUser,
   deleteUser,
   getUserOrders,
   getAllUsers,
   getTotalUsersCount,
   getUserStats,
+  getUserById,
 } from "../models/user.model.js";
+
+// import UserModel from "../models/user.model.js";
 
 export const getUserProfile = async (req, res) => {
   try {
@@ -33,7 +36,7 @@ export const updateUserProfile = async (req, res) => {
 
 export const suspendUserAccount = async (req, res) => {
   try {
-    const updatedUser = await updateUser(req.params.id, {
+    const updatedUser = await UserModel.update(req.params.id, {
       status: "suspended",
     });
     if (!updatedUser) return res.status(404).json({ msg: "User not found" });

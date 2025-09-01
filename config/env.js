@@ -14,5 +14,6 @@ export const {
   DB_URL,
   JWT_SECRET,
   JWT_EXPIRES_IN,
-  // GEMINI_API_KEY,
+  GEMINI_API_KEY,
+  PLANT_ID_API_KEY,
 } = process.env;
