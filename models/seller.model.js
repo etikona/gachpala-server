@@ -94,3 +94,15 @@ export const createSeller = async (data) => {
 
   return res.rows[0];
 };
+
+export const getSellerById = async (id) => {
+  const res = await pool.query("SELECT * FROM sellers WHERE id = $1", [id]);
+  console.log(res.rows[0]);
+  return res.rows[0];
+};
+export const getSellerByUserId = async (user_id) => {
+  const res = await pool.query("SELECT * FROM sellers WHERE user_id = $1", [
+    user_id,
+  ]);
+  return res.rows[0];
+};

@@ -14,7 +14,7 @@ import authRouter from "./routes/auth.route.js";
 import protectedRoute from "./routes/protected.route.js";
 import blogRouter from "./routes/blog.route.js";
 import sellerRouter from "./routes/seller.route.js";
-// import productRouter from "./routes/product.route.js";
+import productRouter from "./routes/product.route.js";
 import orderRouter from "./routes/order.route.js";
 // import paymentRouter from "./routes/payment.route.js";
 import adminDashboard from "./routes/adminDashboard.route.js";
@@ -67,7 +67,7 @@ app.use("/api/v1/admin/overview", adminOverviewRouter);
 app.use("/api/v1/user", userDashboard);
 // app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/orders", orderRouter);
-// app.use("/api/v1/products", productRouter);
+app.use("/api/v1/products", productRouter);
 
 app.use("/api/v1/seller", sellerRouter);
 app.use("/api/v1/blog", blogRouter);
