@@ -1,3 +1,4 @@
+// routes/product.route.js
 import Router from "express";
 import {
   addProduct,
@@ -10,7 +11,8 @@ import {
 } from "../controllers/product.controller.js";
 import { rateProduct } from "../controllers/rating.controller.js";
 import sellerAuth from "../middlewares/sellerAuth.middleware.js";
-import auth from "../middlewares/auth.middleware.js"; // For user ratings
+import auth from "../middlewares/auth.middleware.js";
+import { uploadSingle } from "../middlewares/productUpload.middleware.js"; // Correct named import
 
 const productRouter = Router();
 
@@ -18,14 +20,14 @@ const productRouter = Router();
 productRouter.get("/", listProducts);
 productRouter.get("/:id", getProduct);
 productRouter.get("/:productId/ratings", getProductRatings);
-// productRouter.get("/seller/:sellerId", getProductsBySellerIdPublic);
-// Seller protected routes (using sellerAuth)
-productRouter.post("/", sellerAuth, addProduct);
+
+// Seller protected routes with file upload AND form data parsing
+productRouter.post("/", sellerAuth, uploadSingle, addProduct);
 productRouter.get("/seller/my-products", sellerAuth, getSellerProducts);
-productRouter.put("/:id", sellerAuth, updateProductDetails);
+productRouter.put("/:id", sellerAuth, uploadSingle, updateProductDetails);
 productRouter.delete("/:id", sellerAuth, removeProduct);
 
-// User protected routes (using regular auth for ratings)
+// User protected routes
 productRouter.post("/:productId/ratings", auth, rateProduct);
 
 export default productRouter;
