@@ -210,14 +210,21 @@ export const adminUpdateOrderNotes = async (req, res) => {
     return res.status(400).json({ msg: "Request body is missing" });
   }
 
-  const { adminNotes } = req.body;
-  console.log(adminNotes);
-  if (!adminNotes) {
-    return res.status(400).json({ msg: "Admin notes are required" });
+  // Accept both adminNotes and admin_notes
+  const { adminNotes, admin_notes } = req.body;
+  const notes = adminNotes || admin_notes;
+
+  console.log("Admin notes received:", notes);
+
+  if (!notes) {
+    return res.status(400).json({
+      msg: "Admin notes are required",
+      hint: "Use either 'adminNotes' or 'admin_notes' field in the request body",
+    });
   }
 
   try {
-    const order = await updateOrderAdminNotes(req.params.orderId, adminNotes);
+    const order = await updateOrderAdminNotes(req.params.orderId, notes);
     res.json(order);
   } catch (err) {
     res
