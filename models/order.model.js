@@ -1,24 +1,61 @@
 import pool from "../db.js";
 
-export const createOrder = async ({ userId, total }) => {
-  const res = await pool.query(
-    `INSERT INTO orders (user_id, total) VALUES ($1, $2) RETURNING *`,
-    [userId, total]
-  );
-  return res.rows[0];
+export const createOrder = async ({
+  userId,
+  total,
+  quantity,
+  shippingAddress,
+  paymentMethod,
+  userName,
+  userEmail,
+  productId, // Add productId since it's in your orders table
+}) => {
+  try {
+    const res = await pool.query(
+      `INSERT INTO orders (user_id, total, quantity, shipping_address, payment_method, user_name, user_email, status, product_id) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8) RETURNING *`,
+      [
+        parseInt(userId),
+        parseFloat(total),
+        parseInt(quantity),
+        shippingAddress,
+        paymentMethod,
+        userName,
+        userEmail,
+        parseInt(productId),
+      ]
+    );
+    return res.rows[0];
+  } catch (error) {
+    console.error("Error in createOrder:", error);
+    throw error;
+  }
 };
-
-export const addOrderItem = async ({ orderId, productId, quantity, price }) => {
-  await pool.query(
-    `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)`,
-    [orderId, productId, quantity, price]
-  );
-};
+// export const addOrderItem = async ({ orderId, productId, quantity, price }) => {
+//   await pool.query(
+//     `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)`,
+//     [orderId, productId, quantity, price]
+//   );
+// };
 
 export const getUserOrders = async (userId) => {
   const res = await pool.query(
     `SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC`,
     [userId]
+  );
+  return res.rows;
+};
+
+export const getSellerOrders = async (sellerId) => {
+  const res = await pool.query(
+    `SELECT o.*, oi.product_id, p.seller_id
+     FROM orders o
+     JOIN order_items oi ON o.id = oi.order_id
+     JOIN products p ON oi.product_id = p.id
+     WHERE p.seller_id = $1
+     GROUP BY o.id, oi.product_id, p.seller_id
+     ORDER BY o.created_at DESC`,
+    [sellerId]
   );
   return res.rows;
 };
@@ -73,7 +110,7 @@ export const getFullOrderDetails = async (orderId) => {
 
   // Get order items
   const itemsRes = await pool.query(
-    `SELECT oi.*, p.name, p.image 
+    `SELECT oi.*, p.name, p.image, p.seller_id
      FROM order_items oi
      JOIN products p ON oi.product_id = p.id
      WHERE oi.order_id = $1`,
@@ -97,6 +134,14 @@ export const updateOrderStatus = async (orderId, status) => {
   const res = await pool.query(
     `UPDATE orders SET status = $1 WHERE id = $2 RETURNING *`,
     [status, orderId]
+  );
+  return res.rows[0];
+};
+
+export const updateOrderAdminNotes = async (orderId, adminNotes) => {
+  const res = await pool.query(
+    `UPDATE orders SET admin_notes = $1 WHERE id = $2 RETURNING *`,
+    [adminNotes, orderId]
   );
   return res.rows[0];
 };
@@ -127,4 +172,33 @@ export const cancelOrder = async (orderId) => {
     await pool.query("ROLLBACK");
     throw err;
   }
+};
+
+export const deleteOrder = async (orderId) => {
+  try {
+    await pool.query("BEGIN");
+
+    // Delete order items first (due to foreign key constraint)
+    await pool.query(`DELETE FROM order_items WHERE order_id = $1`, [orderId]);
+
+    // Delete payments
+    await pool.query(`DELETE FROM payments WHERE order_id = $1`, [orderId]);
+
+    // Delete the order
+    const res = await pool.query(
+      `DELETE FROM orders WHERE id = $1 RETURNING *`,
+      [orderId]
+    );
+
+    await pool.query("COMMIT");
+    return res.rows[0];
+  } catch (err) {
+    await pool.query("ROLLBACK");
+    throw err;
+  }
+};
+
+export const getOrderById = async (orderId) => {
+  const res = await pool.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
+  return res.rows[0];
 };

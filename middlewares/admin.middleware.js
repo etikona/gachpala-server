@@ -2,7 +2,7 @@
 
 import jwt from "jsonwebtoken";
 
-export const verifyAdmin = (req, res, next) => {
+const verifyAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ msg: "No token provided" });
 
@@ -19,3 +19,5 @@ export const verifyAdmin = (req, res, next) => {
     res.status(401).json({ msg: "Invalid or expired token" });
   }
 };
+
+export default verifyAdmin;

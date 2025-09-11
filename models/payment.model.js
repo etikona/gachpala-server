@@ -1,10 +1,15 @@
 import pool from "../db.js";
 
-export const createPayment = async ({ orderId, amount, method }) => {
+// In your payment.model.js
+export const createPayment = async ({
+  orderId,
+  amount,
+  method,
+  status = "pending",
+}) => {
   const res = await pool.query(
-    `INSERT INTO payments (order_id, amount, method, status)
-     VALUES ($1, $2, $3, 'success') RETURNING *`,
-    [orderId, amount, method]
+    `INSERT INTO payments (order_id, amount, method, status) VALUES ($1, $2, $3, $4) RETURNING *`,
+    [orderId, amount, method, status]
   );
   return res.rows[0];
 };
