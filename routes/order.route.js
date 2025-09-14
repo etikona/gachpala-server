@@ -31,6 +31,7 @@ orderRouter.get("/seller/orders", auth, sellerAuth, sellerOrders);
 orderRouter.put("/seller/:orderId/cancel", auth, sellerAuth, sellerCancelOrder);
 
 // Admin routes - require authentication and admin role
+// !add in every api (auth, verifyAdmin),
 orderRouter.get("/admin/all", auth, verifyAdmin, adminGetAllOrders);
 orderRouter.get("/admin/stats", auth, verifyAdmin, adminGetOrderStats);
 orderRouter.get("/admin/:orderId", auth, verifyAdmin, adminGetOrderDetails);
@@ -41,9 +42,9 @@ orderRouter.put(
   adminUpdateOrderStatus
 );
 
-//!Issue here
 orderRouter.put(
   "/admin/:orderId/notes",
+
   auth,
   verifyAdmin,
   adminUpdateOrderNotes

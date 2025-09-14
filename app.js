@@ -24,6 +24,7 @@ import adminUsers from "./routes/adminUsers.route.js";
 import adminSellerRoute from "./routes/adminSeller.route.js";
 import adminOverviewRouter from "./routes/adminOverview.route.js";
 import aiRouter from "./routes/ai.route.js";
+import subscriptionRouter from "./routes/subscription.route.js";
 
 dotenv.config();
 // Middleware
@@ -68,7 +69,7 @@ app.use("/api/v1/user", userDashboard);
 // app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/products", productRouter);
-
+app.use("/api/v1/subscription", subscriptionRouter);
 app.use("/api/v1/seller", sellerRouter);
 app.use("/api/v1/blog", blogRouter);
 app.use("/api/v1/ai", aiRouter);
