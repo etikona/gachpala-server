@@ -124,7 +124,7 @@ export const analyzePlant = async (req, res) => {
             fertilizer_type, fertilizer_application, fertilizer_frequency,
             humidity_recommendation, light_recommendation, temp_recommendation,
             nutrient_status, nitrogen_recommendation, phosphorus_recommendation, 
-            potassium_recommendation, plant_type, scientific_name, health_score,
+            potassium_recommendation,  health_score,
             analysis_method, created_at, updated_at
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW(), NOW())
           RETURNING id, created_at
@@ -253,14 +253,21 @@ export const getApiStatus = async (req, res) => {
     });
   }
 };
+//! Temporary test endpoint - remove in production
+// Add this temporary route for testing
 
 export const getAnalysisHistory = async (req, res) => {
   try {
     const userId = req.user?.id;
+
+    console.log("🔍 JWT User ID:", userId);
+    console.log("🔍 Full user object from JWT:", req.user);
+
     if (!userId) {
       return res.status(401).json({
         success: false,
         message: "Authentication required to view analysis history",
+        debug: { user: req.user },
       });
     }
 
@@ -268,19 +275,35 @@ export const getAnalysisHistory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    // Get total count
+    // Debug: Check what user IDs exist in the database
+    const usersQuery = `SELECT DISTINCT user_id FROM plant_analyses`;
+    const usersResult = await pool.query(usersQuery);
+    console.log(
+      "🔍 User IDs in database:",
+      usersResult.rows.map((row) => row.user_id)
+    );
+
+    // Get total count for the specific user
     const countQuery = `SELECT COUNT(*) FROM plant_analyses WHERE user_id = $1`;
     const countResult = await pool.query(countQuery, [userId]);
     const totalCount = parseInt(countResult.rows[0].count);
 
+    console.log("🔍 Total analyses for user", userId, ":", totalCount);
+
     // Get analyses with pagination
     const query = `
       SELECT 
-        id, image_url, status, disease, confidence, description, care_tips,
-        fertilizer_type, fertilizer_application, fertilizer_frequency,
-        humidity_recommendation, light_recommendation, temp_recommendation,
-        plant_type, scientific_name, health_score, analysis_method,
-        created_at, updated_at
+        id, 
+        image_url, 
+        status, 
+        disease, 
+        confidence, 
+        description, 
+        care_tips,
+        plant_type,
+        scientific_name,
+        health_score,
+        created_at
       FROM plant_analyses 
       WHERE user_id = $1 
       ORDER BY created_at DESC 
@@ -288,6 +311,8 @@ export const getAnalysisHistory = async (req, res) => {
     `;
 
     const result = await pool.query(query, [userId, limit, offset]);
+
+    console.log("🔍 Found analyses:", result.rows);
 
     // Format the results
     const analyses = result.rows.map((row) => ({
@@ -297,30 +322,20 @@ export const getAnalysisHistory = async (req, res) => {
       status: row.status,
       disease: row.disease,
       confidence: row.confidence,
-      healthScore: row.health_score,
       description: row.description,
+      careTips: row.care_tips,
+      healthScore: row.health_score,
       imageUrl: row.image_url,
-      careTips: Array.isArray(row.care_tips)
-        ? row.care_tips
-        : JSON.parse(row.care_tips || "[]"),
-      fertilizer: {
-        type: row.fertilizer_type,
-        application: row.fertilizer_application,
-        frequency: row.fertilizer_frequency,
-      },
-      measurements: {
-        humidity: row.humidity_recommendation,
-        light: row.light_recommendation,
-        temperature: row.temp_recommendation,
-      },
-      analysisMethod: row.analysis_method,
       createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      plantName: row.plant_type,
+      healthStatus: row.status,
+      overallHealth: row.health_score,
+      recommendations: row.care_tips,
     }));
 
     res.json({
       success: true,
-      analyses,
+      data: analyses,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(totalCount / limit),
@@ -352,7 +367,19 @@ export const getAnalysisById = async (req, res) => {
     }
 
     const query = `
-      SELECT * FROM plant_analyses 
+      SELECT 
+        id, 
+        image_url, 
+        status, 
+        disease, 
+        confidence, 
+        description, 
+        care_tips,
+        plant_type,
+        scientific_name,
+        health_score,
+        created_at
+      FROM plant_analyses 
       WHERE id = $1 AND user_id = $2
     `;
 
@@ -369,7 +396,7 @@ export const getAnalysisById = async (req, res) => {
 
     res.json({
       success: true,
-      analysis: {
+      data: {
         id: analysis.id,
         plantType: analysis.plant_type,
         scientificName: analysis.scientific_name,
@@ -377,28 +404,16 @@ export const getAnalysisById = async (req, res) => {
         disease: analysis.disease,
         confidence: analysis.confidence,
         description: analysis.description,
-        imageUrl: analysis.image_url,
-        careTips: JSON.parse(analysis.care_tips || "[]"),
-        fertilizer: {
-          type: analysis.fertilizer_type,
-          application: analysis.fertilizer_application,
-          frequency: analysis.fertilizer_frequency,
-        },
-        measurements: {
-          humidity: analysis.humidity_recommendation,
-          light: analysis.light_recommendation,
-          temperature: analysis.temp_recommendation,
-          nutrients: {
-            status: analysis.nutrient_status,
-            nitrogen: analysis.nitrogen_recommendation,
-            phosphorus: analysis.phosphorus_recommendation,
-            potassium: analysis.potassium_recommendation,
-          },
-        },
+        careTips: analysis.care_tips,
         healthScore: analysis.health_score,
-        analysisMethod: analysis.analysis_method,
+        imageUrl: analysis.image_url,
         createdAt: analysis.created_at,
-        updatedAt: analysis.updated_at,
+
+        // Frontend expected fields
+        plantName: analysis.plant_type,
+        healthStatus: analysis.status,
+        overallHealth: analysis.health_score,
+        recommendations: analysis.care_tips,
       },
     });
   } catch (error) {
@@ -410,7 +425,6 @@ export const getAnalysisById = async (req, res) => {
     });
   }
 };
-
 export const deleteAnalysis = async (req, res) => {
   try {
     const userId = req.user?.id;

@@ -18,6 +18,12 @@ export const savePlantAnalysis = async (analysisData) => {
     analysisMethod,
   } = analysisData;
 
+  // Since care_tips is an ARRAY type, we need to format it properly
+  // Convert array to PostgreSQL array format: {"item1", "item2"}
+  const careTipsFormatted = `{${careTips
+    .map((tip) => `"${tip.replace(/"/g, '\\"')}"`)
+    .join(",")}}`;
+
   const query = `
     INSERT INTO plant_analyses (
       user_id, image_url, status, disease, confidence, description, care_tips,
@@ -25,8 +31,8 @@ export const savePlantAnalysis = async (analysisData) => {
       humidity_recommendation, light_recommendation, temp_recommendation,
       nutrient_status, nitrogen_recommendation, phosphorus_recommendation, 
       potassium_recommendation, plant_type, scientific_name, health_score,
-      analysis_method, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW(), NOW())
+      analysis_method
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
     RETURNING *
   `;
 
@@ -37,7 +43,7 @@ export const savePlantAnalysis = async (analysisData) => {
     disease,
     confidence,
     description,
-    JSON.stringify(careTips),
+    careTipsFormatted, // Use formatted array
     fertilizer?.type || "General purpose",
     fertilizer?.application || "As directed",
     fertilizer?.frequency || "Monthly",
@@ -54,10 +60,17 @@ export const savePlantAnalysis = async (analysisData) => {
     analysisMethod,
   ];
 
-  const result = await pool.query(query, values);
-  return result.rows[0];
-};
+  console.log("Saving to DB with values:", values);
 
+  try {
+    const result = await pool.query(query, values);
+    console.log("✅ Successfully saved to DB:", result.rows[0]);
+    return result.rows[0];
+  } catch (error) {
+    console.error("❌ Database save error:", error);
+    throw error;
+  }
+};
 export const getUserPlantAnalyses = async (userId, options = {}) => {
   const {
     page = 1,
@@ -88,12 +101,18 @@ export const getUserPlantAnalyses = async (userId, options = {}) => {
 
   const query = `
     SELECT 
-      id, image_url, status, disease, confidence, description, care_tips,
-      fertilizer_type, fertilizer_application, fertilizer_frequency,
-      humidity_recommendation, light_recommendation, temp_recommendation,
-      nutrient_status, nitrogen_recommendation, phosphorus_recommendation,
-      potassium_recommendation, plant_type, scientific_name, health_score,
-      analysis_method, created_at, updated_at
+      id, 
+      image_url, 
+      status, 
+      disease, 
+      confidence, 
+      description, 
+      care_tips,
+      plant_type,
+      scientific_name,
+      health_score,
+      created_at,
+      updated_at
     FROM plant_analyses 
     ${whereClause}
     ORDER BY ${sortBy} ${sortOrder}
