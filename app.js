@@ -41,7 +41,9 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Immediately test connection
-
+app.get("/", (req, res) => {
+  res.json({ message: "API is running!" });
+});
 app.get("/test-db", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW() as time");
