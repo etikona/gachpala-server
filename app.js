@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import { PORT } from "./config/env.js";
-import "./db-init.js";
+// import "./db-init.js";
 
 import cors from "cors";
 // import { fileURLToPath } from "url";
@@ -31,7 +31,7 @@ dotenv.config();
 app.use(
   cors({
     origin: "*" || "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );

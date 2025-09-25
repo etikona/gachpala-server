@@ -1,0 +1,114 @@
+Perfect! Let’s do the **full migration using Supabase Web UI** — this avoids `pg_restore` and works easily even on Windows.
+
+Here’s the step-by-step guide:
+
+---
+
+## 🔹 Step 1: Export Your Local Database as Plain SQL
+
+1. Open a terminal or command prompt.
+2. Run this command to create a **plain SQL dump**:
+
+```bash
+pg_dump -U postgres -d gachpala -f backup.sql
+```
+
+* `-U postgres` → your local DB username
+* `-d gachpala` → your local DB name
+* `-f backup.sql` → output SQL file
+* **Note:** This creates a readable SQL file, unlike the compressed format `-Fc` that `pg_restore` needs.
+
+3. Check the file `backup.sql` is created in your current folder.
+
+---
+
+## 🔹 Step 2: Open Supabase SQL Editor
+
+1. Go to [Supabase Dashboard](https://app.supabase.com/) → select your project.
+2. On the left sidebar → click **SQL Editor**.
+3. Click **New query**.
+
+---
+
+## 🔹 Step 3: Import SQL File into Supabase
+
+1. Open your `backup.sql` file with a text editor (VSCode, Notepad++).
+
+2. Copy the **entire content** (all SQL commands).
+
+   * If it’s very large, you may need to split into multiple chunks because the SQL Editor has a size limit.
+
+3. Paste into Supabase SQL Editor.
+
+4. Click **Run** → this will create all your tables and insert all data.
+
+---
+
+## 🔹 Step 4: Verify Data
+
+After running the SQL:
+
+1. Go to **Table Editor** in Supabase Dashboard.
+2. Check that all your tables appear.
+3. Click **Browse rows** → you should see your data.
+
+---
+
+## 🔹 Step 5: Connect Your Node.js Backend
+
+1. In your `.env` file, set the **direct connection string**:
+
+```env
+DATABASE_URL=postgresql://postgres:<YOUR_PASSWORD>@db.eoiusnicxmkgvemxdufx.supabase.co:5432/postgres
+```
+
+2. In your Node.js code (example using `pg`):
+
+```js
+import pg from "pg";
+const { Pool } = pg;
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // Supabase requires SSL
+});
+
+export default pool;
+```
+
+3. Restart your server and test your API → it should now return the data from Supabase.
+
+---
+
+## 🔹 Notes & Tips
+
+* For **large databases**, split your SQL file into smaller chunks and run them sequentially.
+* Always make sure the **direct connection string** is used for SQL imports.
+* Poolers (`transaction pooler` / `session pooler`) are only for **runtime queries** in your app, not for imports.
+
+---
+
+If you want, I can also **write a ready-to-use command for Windows to export your DB and prepare a SQL file** so you can directly paste into Supabase Web UI — it makes the whole process faster.
+
+Do you want me to do that?
+
+
+
+#SUPABASE
+# !SUPABASE_PROJECT_PASSWORD=vMhNzS2p!4r@.AP
+# vMhNzS2p!4r@.AP
+# PlgvT8eXNRaAHYoT
+# vMhNzS2p!4r@.AP
+Connection_string_to_your_Supabase_database=postgresql://postgres:PlgvT8eXNRaAHYoT@db.eoiusnicxmkgvemxdufx.supabase.co:5432/postgres
+SESSION_POOLER=postgresql://postgres.eoiusnicxmkgvemxdufx:vMhNzS2p!4r@.AP@aws-1-eu-west-2.pooler.supabase.com:6543/postgres
+PROJECT_URL=https://eoiusnicxmkgvemxdufx.supabase.co
+API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvaXVzbmljeG1rZ3ZlbXhkdWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MzIyODIsImV4cCI6MjA3NDIwODI4Mn0.WJPQ_CEzZEWiRc2azq78CPkVjLHTyKeqProy9u2xFPQ
+# SUPABASE_URL=https://your-supabase-url.supabase.co
+# SUPABASE_KEY=your-supabase-key  
+# SUPABASE_BUCKET=your-supabase-bucket
+# SUPABASE_IMAGE_PATH=https://your-supabase-url.supabase.co/storage/v1/object/public/your-supabase-bucket/
+# SUPABASE_DEFAULT_IMAGE=default-image.png
+# SUPABASE_AVATAR_PATH=https://your-supabase-url.supabase.co/storage/v1/object/public/avatars/
+# SUPABASE_DEFAULT_AVATAR=default-avatar.png  
+# SUPABASE_PRODUCT_IMAGE_PATH=https://your-supabase-url.supabase.co/storage/v1/object/public/product-images/
+# SUPABASE_DEFAULT_PRODUCT_IMAGE=default-product-image.png

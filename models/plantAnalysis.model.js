@@ -1,4 +1,3 @@
-// backend/models/plantAnalysis.model.js
 import pool from "../db.js";
 
 export const savePlantAnalysis = async (analysisData) => {
@@ -18,11 +17,17 @@ export const savePlantAnalysis = async (analysisData) => {
     analysisMethod,
   } = analysisData;
 
-  // Since care_tips is an ARRAY type, we need to format it properly
-  // Convert array to PostgreSQL array format: {"item1", "item2"}
-  const careTipsFormatted = `{${careTips
-    .map((tip) => `"${tip.replace(/"/g, '\\"')}"`)
-    .join(",")}}`;
+  // Format care_tips as PostgreSQL array
+  let careTipsFormatted;
+  if (Array.isArray(careTips)) {
+    careTipsFormatted = `{${careTips
+      .map((tip) => `"${tip.replace(/"/g, '\\"')}"`)
+      .join(",")}}`;
+  } else if (typeof careTips === "string") {
+    careTipsFormatted = `{"${careTips.replace(/"/g, '\\"')}"}`;
+  } else {
+    careTipsFormatted = "{}";
+  }
 
   const query = `
     INSERT INTO plant_analyses (
@@ -31,46 +36,44 @@ export const savePlantAnalysis = async (analysisData) => {
       humidity_recommendation, light_recommendation, temp_recommendation,
       nutrient_status, nitrogen_recommendation, phosphorus_recommendation, 
       potassium_recommendation, plant_type, scientific_name, health_score,
-      analysis_method
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+      analysis_method, created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW(), NOW())
     RETURNING *
   `;
 
   const values = [
     userId,
     imageUrl,
-    status,
-    disease,
-    confidence,
-    description,
-    careTipsFormatted, // Use formatted array
-    fertilizer?.type || "General purpose",
-    fertilizer?.application || "As directed",
-    fertilizer?.frequency || "Monthly",
+    status || "Unknown",
+    disease || "None",
+    confidence || 0,
+    description || "No description available",
+    careTipsFormatted,
+    fertilizer?.type || "General purpose fertilizer",
+    fertilizer?.application || "Apply as directed on package",
+    fertilizer?.frequency || "Monthly during growing season",
     measurements?.humidity || "40-60%",
-    measurements?.light || "Bright indirect",
+    measurements?.light || "Bright indirect light",
     measurements?.temp || "18-24°C",
     measurements?.nutrients?.status || "Good",
     measurements?.nutrients?.nitrogen || "Moderate",
     measurements?.nutrients?.phosphorus || "Moderate",
     measurements?.nutrients?.potassium || "Moderate",
-    plantType,
-    scientificName,
-    healthScore,
-    analysisMethod,
+    plantType || "Unknown Plant",
+    scientificName || "Unknown species",
+    healthScore || 0,
+    analysisMethod || "ai_analysis",
   ];
-
-  console.log("Saving to DB with values:", values);
 
   try {
     const result = await pool.query(query, values);
-    console.log("✅ Successfully saved to DB:", result.rows[0]);
     return result.rows[0];
   } catch (error) {
-    console.error("❌ Database save error:", error);
-    throw error;
+    console.error("Database save error:", error);
+    throw new Error("Failed to save plant analysis to database");
   }
 };
+
 export const getUserPlantAnalyses = async (userId, options = {}) => {
   const {
     page = 1,
@@ -82,7 +85,6 @@ export const getUserPlantAnalyses = async (userId, options = {}) => {
   } = options;
 
   const offset = (page - 1) * limit;
-
   let whereClause = "WHERE user_id = $1";
   let params = [userId];
   let paramCount = 1;
@@ -101,18 +103,12 @@ export const getUserPlantAnalyses = async (userId, options = {}) => {
 
   const query = `
     SELECT 
-      id, 
-      image_url, 
-      status, 
-      disease, 
-      confidence, 
-      description, 
-      care_tips,
-      plant_type,
-      scientific_name,
-      health_score,
-      created_at,
-      updated_at
+      id, image_url, status, disease, confidence, description, care_tips,
+      plant_type, scientific_name, health_score, fertilizer_type,
+      fertilizer_application, fertilizer_frequency, humidity_recommendation,
+      light_recommendation, temp_recommendation, nutrient_status,
+      nitrogen_recommendation, phosphorus_recommendation, potassium_recommendation,
+      analysis_method, created_at, updated_at
     FROM plant_analyses 
     ${whereClause}
     ORDER BY ${sortBy} ${sortOrder}
@@ -120,37 +116,59 @@ export const getUserPlantAnalyses = async (userId, options = {}) => {
   `;
 
   params.push(limit, offset);
-  const result = await pool.query(query, params);
 
-  // Get total count for pagination
-  const countQuery = `SELECT COUNT(*) FROM plant_analyses ${whereClause}`;
-  const countResult = await pool.query(countQuery, params.slice(0, paramCount));
-  const totalCount = parseInt(countResult.rows[0].count);
+  try {
+    const result = await pool.query(query, params);
 
-  return {
-    analyses: result.rows,
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(totalCount / limit),
-      totalCount,
-      hasNext: page < Math.ceil(totalCount / limit),
-      hasPrev: page > 1,
-    },
-  };
+    // Get total count for pagination
+    const countQuery = `SELECT COUNT(*) FROM plant_analyses ${whereClause}`;
+    const countResult = await pool.query(
+      countQuery,
+      params.slice(0, paramCount)
+    );
+    const totalCount = parseInt(countResult.rows[0].count);
+
+    return {
+      analyses: result.rows,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+        hasNext: page < Math.ceil(totalCount / limit),
+        hasPrev: page > 1,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching user plant analyses:", error);
+    throw new Error("Failed to fetch plant analyses");
+  }
 };
 
 export const getPlantAnalysisById = async (id, userId) => {
-  const query = `
-    SELECT * FROM plant_analyses 
-    WHERE id = $1 AND user_id = $2
-  `;
+  const query = `SELECT * FROM plant_analyses WHERE id = $1 AND user_id = $2`;
 
-  const result = await pool.query(query, [id, userId]);
-  return result.rows[0] || null;
+  try {
+    const result = await pool.query(query, [id, userId]);
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching plant analysis by ID:", error);
+    throw new Error("Failed to fetch plant analysis");
+  }
 };
 
 export const updatePlantAnalysis = async (id, userId, updateData) => {
   const { status, disease, description, careTips } = updateData;
+
+  let careTipsFormatted = null;
+  if (careTips) {
+    if (Array.isArray(careTips)) {
+      careTipsFormatted = `{${careTips
+        .map((tip) => `"${tip.replace(/"/g, '\\"')}"`)
+        .join(",")}}`;
+    } else if (typeof careTips === "string") {
+      careTipsFormatted = `{"${careTips.replace(/"/g, '\\"')}"}`;
+    }
+  }
 
   const query = `
     UPDATE plant_analyses 
@@ -164,61 +182,73 @@ export const updatePlantAnalysis = async (id, userId, updateData) => {
     RETURNING *
   `;
 
-  const values = [
-    id,
-    userId,
-    status,
-    disease,
-    description,
-    careTips ? JSON.stringify(careTips) : null,
-  ];
+  const values = [id, userId, status, disease, description, careTipsFormatted];
 
-  const result = await pool.query(query, values);
-  return result.rows[0] || null;
+  try {
+    const result = await pool.query(query, values);
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error updating plant analysis:", error);
+    throw new Error("Failed to update plant analysis");
+  }
 };
 
 export const deletePlantAnalysis = async (id, userId) => {
-  const query = `
-    DELETE FROM plant_analyses 
-    WHERE id = $1 AND user_id = $2
-    RETURNING image_url
-  `;
+  const query = `DELETE FROM plant_analyses WHERE id = $1 AND user_id = $2 RETURNING image_url`;
 
-  const result = await pool.query(query, [id, userId]);
-  return result.rows[0] || null;
+  try {
+    const result = await pool.query(query, [id, userId]);
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error deleting plant analysis:", error);
+    throw new Error("Failed to delete plant analysis");
+  }
 };
 
-export const getAnalyticsData = async (userId) => {
+export const getUserAnalyticsData = async (userId) => {
   const queries = {
-    totalAnalyses: `
-      SELECT COUNT(*) as count 
+    overview: `
+      SELECT 
+        COUNT(*) as total_scans,
+        AVG(health_score) as avg_health_score,
+        AVG(confidence) as avg_confidence,
+        COUNT(CASE WHEN status = 'Healthy' THEN 1 END) as healthy_count,
+        COUNT(CASE WHEN status IN ('Unhealthy', 'Diseased', 'Sick') THEN 1 END) as unhealthy_count,
+        COUNT(DISTINCT plant_type) as unique_plant_types
       FROM plant_analyses 
       WHERE user_id = $1
     `,
-    healthyPlants: `
-      SELECT COUNT(*) as count 
+    plantTypes: `
+      SELECT plant_type, COUNT(*) as count, AVG(health_score) as avg_health
       FROM plant_analyses 
-      WHERE user_id = $1 AND status = 'Healthy'
-    `,
-    unhealthyPlants: `
-      SELECT COUNT(*) as count 
-      FROM plant_analyses 
-      WHERE user_id = $1 AND status = 'Unhealthy'
-    `,
-    topPlantTypes: `
-      SELECT plant_type, COUNT(*) as count
-      FROM plant_analyses 
-      WHERE user_id = $1 AND plant_type IS NOT NULL
+      WHERE user_id = $1 AND plant_type IS NOT NULL AND plant_type != 'Unknown Plant'
       GROUP BY plant_type
       ORDER BY count DESC
+      LIMIT 10
+    `,
+    monthlyTrends: `
+      SELECT 
+        DATE_TRUNC('month', created_at) as month,
+        COUNT(*) as scan_count,
+        AVG(health_score) as avg_health_score
+      FROM plant_analyses 
+      WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '12 months'
+      GROUP BY DATE_TRUNC('month', created_at)
+      ORDER BY month DESC
+    `,
+    recentScans: `
+      SELECT id, plant_type, status, health_score, created_at, image_url
+      FROM plant_analyses 
+      WHERE user_id = $1 
+      ORDER BY created_at DESC 
       LIMIT 5
     `,
-    recentAnalyses: `
-      SELECT DATE(created_at) as date, COUNT(*) as count
+    healthDistribution: `
+      SELECT status, COUNT(*) as count
       FROM plant_analyses 
-      WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
-      GROUP BY DATE(created_at)
-      ORDER BY date DESC
+      WHERE user_id = $1
+      GROUP BY status
+      ORDER BY count DESC
     `,
   };
 
@@ -235,10 +265,17 @@ export const getAnalyticsData = async (userId) => {
   }
 
   return {
-    totalAnalyses: parseInt(results.totalAnalyses[0]?.count || 0),
-    healthyPlants: parseInt(results.healthyPlants[0]?.count || 0),
-    unhealthyPlants: parseInt(results.unhealthyPlants[0]?.count || 0),
-    topPlantTypes: results.topPlantTypes,
-    recentAnalyses: results.recentAnalyses,
+    overview: results.overview[0] || {
+      total_scans: 0,
+      avg_health_score: 0,
+      avg_confidence: 0,
+      healthy_count: 0,
+      unhealthy_count: 0,
+      unique_plant_types: 0,
+    },
+    plantTypes: results.plantTypes,
+    monthlyTrends: results.monthlyTrends,
+    recentScans: results.recentScans,
+    healthDistribution: results.healthDistribution,
   };
 };

@@ -1,19 +1,33 @@
 import { config } from "dotenv";
 
-// Always load base .env first
-config({ path: `.env.${process.env.NODE_ENV || "development"}.local` });
+// Get current environment (development or production)
+const env = process.env.NODE_ENV || "development";
 
-// Then load environment-specific file
-// if (process.env.NODE_ENV) {
-//   config({ path: `.env.${process.env.NODE_ENV || "development"}.local` });
-// }
+// Load the correct environment file
+config({ path: `.env.${env}.local` });
 
+// Also load base .env file as backup
+config({ path: `.env` });
+
+// Debug logging
+console.log("🔧 Loading environment:", env);
+console.log("📁 Loading file:", `.env.${env}.local`);
+
+// Export all environment variables
 export const {
   PORT,
   NODE_ENV,
   DB_URL,
+  DB_USER,
+  DB_PASS,
+  DB_HOST,
+  DB_NAME,
   JWT_SECRET,
   JWT_EXPIRES_IN,
   GEMINI_API_KEY,
   PLANT_ID_API_KEY,
 } = process.env;
+
+// Debug: Check if DB_URL is loaded
+console.log("✅ DB_URL loaded:", !!DB_URL);
+console.log("✅ NODE_ENV:", NODE_ENV);
